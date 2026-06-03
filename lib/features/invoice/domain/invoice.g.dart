@@ -16,6 +16,8 @@ _$InvoiceImpl _$$InvoiceImplFromJson(Map<String, dynamic> json) =>
           .toList(),
       paymentStatus: $enumDecode(_$PaymentStatusEnumMap, json['paymentStatus']),
       amountPaid: (json['amountPaid'] as num).toDouble(),
+      showLogo: json['showLogo'] as bool? ?? true,
+      showSignature: json['showSignature'] as bool? ?? true,
     );
 
 Map<String, dynamic> _$$InvoiceImplToJson(_$InvoiceImpl instance) =>
@@ -26,6 +28,8 @@ Map<String, dynamic> _$$InvoiceImplToJson(_$InvoiceImpl instance) =>
       'items': instance.items,
       'paymentStatus': _$PaymentStatusEnumMap[instance.paymentStatus]!,
       'amountPaid': instance.amountPaid,
+      'showLogo': instance.showLogo,
+      'showSignature': instance.showSignature,
     };
 
 const _$PaymentStatusEnumMap = {

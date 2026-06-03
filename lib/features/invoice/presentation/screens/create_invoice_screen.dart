@@ -6,6 +6,7 @@ import '../../../company/presentation/providers/company_provider.dart';
 import '../providers/invoice_notifier.dart';
 import '../widgets/company_section.dart';
 import '../widgets/customer_section.dart';
+import '../widgets/document_customization_section.dart';
 import '../widgets/service_items_section.dart';
 
 import '../widgets/payment_section.dart';
@@ -166,6 +167,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
 
               // Payment Details Card
               const PaymentSection(),
+              const SizedBox(height: 16),
+
+              // PDF Customization Settings Card
+              const DocumentCustomizationSection(),
             ],
           ),
         ),

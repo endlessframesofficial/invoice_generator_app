@@ -25,6 +25,8 @@ mixin _$InvoiceFormState {
   PaymentStatus get paymentStatus => throw _privateConstructorUsedError;
   double get amountPaid => throw _privateConstructorUsedError;
   bool get isSubmitting => throw _privateConstructorUsedError;
+  bool get showLogo => throw _privateConstructorUsedError;
+  bool get showSignature => throw _privateConstructorUsedError;
   String? get errorMessage => throw _privateConstructorUsedError;
   String? get generatedInvoiceNumber => throw _privateConstructorUsedError;
   DateTime? get generatedInvoiceDate => throw _privateConstructorUsedError;
@@ -52,6 +54,8 @@ abstract class $InvoiceFormStateCopyWith<$Res> {
     PaymentStatus paymentStatus,
     double amountPaid,
     bool isSubmitting,
+    bool showLogo,
+    bool showSignature,
     String? errorMessage,
     String? generatedInvoiceNumber,
     DateTime? generatedInvoiceDate,
@@ -81,6 +85,8 @@ class _$InvoiceFormStateCopyWithImpl<$Res, $Val extends InvoiceFormState>
     Object? paymentStatus = null,
     Object? amountPaid = null,
     Object? isSubmitting = null,
+    Object? showLogo = null,
+    Object? showSignature = null,
     Object? errorMessage = freezed,
     Object? generatedInvoiceNumber = freezed,
     Object? generatedInvoiceDate = freezed,
@@ -119,6 +125,14 @@ class _$InvoiceFormStateCopyWithImpl<$Res, $Val extends InvoiceFormState>
                 ? _value.isSubmitting
                 : isSubmitting // ignore: cast_nullable_to_non_nullable
                       as bool,
+            showLogo: null == showLogo
+                ? _value.showLogo
+                : showLogo // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            showSignature: null == showSignature
+                ? _value.showSignature
+                : showSignature // ignore: cast_nullable_to_non_nullable
+                      as bool,
             errorMessage: freezed == errorMessage
                 ? _value.errorMessage
                 : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -155,6 +169,8 @@ abstract class _$$InvoiceFormStateImplCopyWith<$Res>
     PaymentStatus paymentStatus,
     double amountPaid,
     bool isSubmitting,
+    bool showLogo,
+    bool showSignature,
     String? errorMessage,
     String? generatedInvoiceNumber,
     DateTime? generatedInvoiceDate,
@@ -183,6 +199,8 @@ class __$$InvoiceFormStateImplCopyWithImpl<$Res>
     Object? paymentStatus = null,
     Object? amountPaid = null,
     Object? isSubmitting = null,
+    Object? showLogo = null,
+    Object? showSignature = null,
     Object? errorMessage = freezed,
     Object? generatedInvoiceNumber = freezed,
     Object? generatedInvoiceDate = freezed,
@@ -221,6 +239,14 @@ class __$$InvoiceFormStateImplCopyWithImpl<$Res>
             ? _value.isSubmitting
             : isSubmitting // ignore: cast_nullable_to_non_nullable
                   as bool,
+        showLogo: null == showLogo
+            ? _value.showLogo
+            : showLogo // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        showSignature: null == showSignature
+            ? _value.showSignature
+            : showSignature // ignore: cast_nullable_to_non_nullable
+                  as bool,
         errorMessage: freezed == errorMessage
             ? _value.errorMessage
             : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -250,6 +276,8 @@ class _$InvoiceFormStateImpl extends _InvoiceFormState {
     this.paymentStatus = PaymentStatus.unpaid,
     this.amountPaid = 0.0,
     this.isSubmitting = false,
+    this.showLogo = true,
+    this.showSignature = true,
     this.errorMessage,
     this.generatedInvoiceNumber,
     this.generatedInvoiceDate,
@@ -287,6 +315,12 @@ class _$InvoiceFormStateImpl extends _InvoiceFormState {
   @JsonKey()
   final bool isSubmitting;
   @override
+  @JsonKey()
+  final bool showLogo;
+  @override
+  @JsonKey()
+  final bool showSignature;
+  @override
   final String? errorMessage;
   @override
   final String? generatedInvoiceNumber;
@@ -295,7 +329,7 @@ class _$InvoiceFormStateImpl extends _InvoiceFormState {
 
   @override
   String toString() {
-    return 'InvoiceFormState(customerName: $customerName, customerPhone: $customerPhone, customerEmail: $customerEmail, customerAddress: $customerAddress, items: $items, paymentStatus: $paymentStatus, amountPaid: $amountPaid, isSubmitting: $isSubmitting, errorMessage: $errorMessage, generatedInvoiceNumber: $generatedInvoiceNumber, generatedInvoiceDate: $generatedInvoiceDate)';
+    return 'InvoiceFormState(customerName: $customerName, customerPhone: $customerPhone, customerEmail: $customerEmail, customerAddress: $customerAddress, items: $items, paymentStatus: $paymentStatus, amountPaid: $amountPaid, isSubmitting: $isSubmitting, showLogo: $showLogo, showSignature: $showSignature, errorMessage: $errorMessage, generatedInvoiceNumber: $generatedInvoiceNumber, generatedInvoiceDate: $generatedInvoiceDate)';
   }
 
   @override
@@ -318,6 +352,10 @@ class _$InvoiceFormStateImpl extends _InvoiceFormState {
                 other.amountPaid == amountPaid) &&
             (identical(other.isSubmitting, isSubmitting) ||
                 other.isSubmitting == isSubmitting) &&
+            (identical(other.showLogo, showLogo) ||
+                other.showLogo == showLogo) &&
+            (identical(other.showSignature, showSignature) ||
+                other.showSignature == showSignature) &&
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage) &&
             (identical(other.generatedInvoiceNumber, generatedInvoiceNumber) ||
@@ -337,6 +375,8 @@ class _$InvoiceFormStateImpl extends _InvoiceFormState {
     paymentStatus,
     amountPaid,
     isSubmitting,
+    showLogo,
+    showSignature,
     errorMessage,
     generatedInvoiceNumber,
     generatedInvoiceDate,
@@ -364,6 +404,8 @@ abstract class _InvoiceFormState extends InvoiceFormState {
     final PaymentStatus paymentStatus,
     final double amountPaid,
     final bool isSubmitting,
+    final bool showLogo,
+    final bool showSignature,
     final String? errorMessage,
     final String? generatedInvoiceNumber,
     final DateTime? generatedInvoiceDate,
@@ -386,6 +428,10 @@ abstract class _InvoiceFormState extends InvoiceFormState {
   double get amountPaid;
   @override
   bool get isSubmitting;
+  @override
+  bool get showLogo;
+  @override
+  bool get showSignature;
   @override
   String? get errorMessage;
   @override

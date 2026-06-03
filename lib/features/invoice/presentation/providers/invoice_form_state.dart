@@ -17,6 +17,8 @@ class InvoiceFormState with _$InvoiceFormState {
     @Default(PaymentStatus.unpaid) PaymentStatus paymentStatus,
     @Default(0.0) double amountPaid,
     @Default(false) bool isSubmitting,
+    @Default(true) bool showLogo,
+    @Default(true) bool showSignature,
     String? errorMessage,
     String? generatedInvoiceNumber,
     DateTime? generatedInvoiceDate,

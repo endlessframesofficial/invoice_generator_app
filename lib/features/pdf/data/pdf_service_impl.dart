@@ -66,6 +66,15 @@ class PdfServiceImpl implements PdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
+                      companyInfo.name,
+                      style: pw.TextStyle(
+                        font: boldFont,
+                        fontSize: 13,
+                        color: PdfColor.fromHex('#0277BD'),
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
                       companyInfo.address,
                       style: pw.TextStyle(fontSize: 10, color: PdfColor.fromHex('#334155')),
                     ),
@@ -82,12 +91,15 @@ class PdfServiceImpl implements PdfService {
                   ],
                 ),
                 // Premium company logo image containing cartoon technician and company name
-                pw.Image(
-                  logoImage,
-                  width: 75,
-                  height: 75,
-                  fit: pw.BoxFit.contain,
-                ),
+                if (invoice.showLogo)
+                  pw.Image(
+                    logoImage,
+                    width: 75,
+                    height: 75,
+                    fit: pw.BoxFit.contain,
+                  )
+                else
+                  pw.SizedBox(width: 75, height: 75),
               ],
             ),
 
@@ -343,20 +355,49 @@ class PdfServiceImpl implements PdfService {
                             style: pw.TextStyle(font: baseFont, fontSize: 8),
                           ),
                           pw.SizedBox(height: 8),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.only(right: 10),
-                            child: pw.Image(
-                              signatureImage,
-                              width: 80,
-                              height: 40,
-                              fit: pw.BoxFit.contain,
+                          if (invoice.showSignature) ...[
+                            pw.Padding(
+                              padding: const pw.EdgeInsets.only(right: 10),
+                              child: pw.Image(
+                                signatureImage,
+                                width: 80,
+                                height: 40,
+                                fit: pw.BoxFit.contain,
+                              ),
                             ),
-                          ),
-                          pw.SizedBox(height: 2),
-                          pw.Text(
-                            'Authorized Signatory',
-                            style: pw.TextStyle(font: boldFont, fontSize: 9),
-                          ),
+                            pw.SizedBox(height: 2),
+                            pw.Text(
+                              'Authorized Signatory',
+                              style: pw.TextStyle(font: boldFont, fontSize: 9),
+                            ),
+                          ] else ...[
+                            pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              decoration: pw.BoxDecoration(
+                                border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
+                                borderRadius: pw.BorderRadius.circular(4),
+                              ),
+                              child: pw.Text(
+                                '[Electronically Signed]',
+                                style: pw.TextStyle(
+                                  font: baseFont,
+                                  fontSize: 8,
+                                  color: PdfColors.grey700,
+                                  fontStyle: pw.FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                            pw.SizedBox(height: 8),
+                            pw.Text(
+                              'This is a computer-generated invoice.\nNo physical signature is required.',
+                              textAlign: pw.TextAlign.right,
+                              style: pw.TextStyle(
+                                font: baseFont,
+                                fontSize: 7,
+                                color: PdfColors.grey600,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],

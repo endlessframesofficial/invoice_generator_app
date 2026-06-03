@@ -187,6 +187,14 @@ class InvoiceNotifier extends _$InvoiceNotifier {
     );
   }
 
+  void updateShowLogo(bool value) {
+    state = state.copyWith(showLogo: value);
+  }
+
+  void updateShowSignature(bool value) {
+    state = state.copyWith(showSignature: value);
+  }
+
   /// Generates the Invoice entity if the form is valid.
   Invoice? generateInvoice() {
     final validationError = getValidationError();
@@ -227,6 +235,8 @@ class InvoiceNotifier extends _$InvoiceNotifier {
       items: state.items,
       paymentStatus: state.paymentStatus,
       amountPaid: finalAmountPaid,
+      showLogo: state.showLogo,
+      showSignature: state.showSignature,
     );
   }
 
@@ -235,6 +245,8 @@ class InvoiceNotifier extends _$InvoiceNotifier {
       items: [_createEmptyItem()],
       paymentStatus: PaymentStatus.unpaid,
       amountPaid: 0.0,
+      showLogo: true,
+      showSignature: true,
     );
   }
 }

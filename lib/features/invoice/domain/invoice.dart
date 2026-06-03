@@ -18,6 +18,8 @@ class Invoice with _$Invoice {
     required List<ServiceItem> items,
     required PaymentStatus paymentStatus,
     required double amountPaid,
+    @Default(true) bool showLogo,
+    @Default(true) bool showSignature,
   }) = _Invoice;
 
   double get totalAmount => items.fold(0.0, (sum, item) => sum + item.totalAmount);

@@ -6,7 +6,7 @@ part of 'invoice_notifier.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$invoiceNotifierHash() => r'0dcdd917eb044c525f9f64c3eea749128da52acf';
+String _$invoiceNotifierHash() => r'394346a65987088446dae81f19172bffd3592232';
 
 /// See also [InvoiceNotifier].
 @ProviderFor(InvoiceNotifier)

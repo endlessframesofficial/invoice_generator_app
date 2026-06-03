@@ -27,6 +27,8 @@ mixin _$Invoice {
   List<ServiceItem> get items => throw _privateConstructorUsedError;
   PaymentStatus get paymentStatus => throw _privateConstructorUsedError;
   double get amountPaid => throw _privateConstructorUsedError;
+  bool get showLogo => throw _privateConstructorUsedError;
+  bool get showSignature => throw _privateConstructorUsedError;
 
   /// Serializes this Invoice to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -49,6 +51,8 @@ abstract class $InvoiceCopyWith<$Res> {
     List<ServiceItem> items,
     PaymentStatus paymentStatus,
     double amountPaid,
+    bool showLogo,
+    bool showSignature,
   });
 
   $CustomerCopyWith<$Res> get customer;
@@ -75,6 +79,8 @@ class _$InvoiceCopyWithImpl<$Res, $Val extends Invoice>
     Object? items = null,
     Object? paymentStatus = null,
     Object? amountPaid = null,
+    Object? showLogo = null,
+    Object? showSignature = null,
   }) {
     return _then(
       _value.copyWith(
@@ -102,6 +108,14 @@ class _$InvoiceCopyWithImpl<$Res, $Val extends Invoice>
                 ? _value.amountPaid
                 : amountPaid // ignore: cast_nullable_to_non_nullable
                       as double,
+            showLogo: null == showLogo
+                ? _value.showLogo
+                : showLogo // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            showSignature: null == showSignature
+                ? _value.showSignature
+                : showSignature // ignore: cast_nullable_to_non_nullable
+                      as bool,
           )
           as $Val,
     );
@@ -133,6 +147,8 @@ abstract class _$$InvoiceImplCopyWith<$Res> implements $InvoiceCopyWith<$Res> {
     List<ServiceItem> items,
     PaymentStatus paymentStatus,
     double amountPaid,
+    bool showLogo,
+    bool showSignature,
   });
 
   @override
@@ -159,6 +175,8 @@ class __$$InvoiceImplCopyWithImpl<$Res>
     Object? items = null,
     Object? paymentStatus = null,
     Object? amountPaid = null,
+    Object? showLogo = null,
+    Object? showSignature = null,
   }) {
     return _then(
       _$InvoiceImpl(
@@ -186,6 +204,14 @@ class __$$InvoiceImplCopyWithImpl<$Res>
             ? _value.amountPaid
             : amountPaid // ignore: cast_nullable_to_non_nullable
                   as double,
+        showLogo: null == showLogo
+            ? _value.showLogo
+            : showLogo // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        showSignature: null == showSignature
+            ? _value.showSignature
+            : showSignature // ignore: cast_nullable_to_non_nullable
+                  as bool,
       ),
     );
   }
@@ -201,6 +227,8 @@ class _$InvoiceImpl extends _Invoice {
     required final List<ServiceItem> items,
     required this.paymentStatus,
     required this.amountPaid,
+    this.showLogo = true,
+    this.showSignature = true,
   }) : _items = items,
        super._();
 
@@ -225,10 +253,16 @@ class _$InvoiceImpl extends _Invoice {
   final PaymentStatus paymentStatus;
   @override
   final double amountPaid;
+  @override
+  @JsonKey()
+  final bool showLogo;
+  @override
+  @JsonKey()
+  final bool showSignature;
 
   @override
   String toString() {
-    return 'Invoice(invoiceNumber: $invoiceNumber, invoiceDate: $invoiceDate, customer: $customer, items: $items, paymentStatus: $paymentStatus, amountPaid: $amountPaid)';
+    return 'Invoice(invoiceNumber: $invoiceNumber, invoiceDate: $invoiceDate, customer: $customer, items: $items, paymentStatus: $paymentStatus, amountPaid: $amountPaid, showLogo: $showLogo, showSignature: $showSignature)';
   }
 
   @override
@@ -246,7 +280,11 @@ class _$InvoiceImpl extends _Invoice {
             (identical(other.paymentStatus, paymentStatus) ||
                 other.paymentStatus == paymentStatus) &&
             (identical(other.amountPaid, amountPaid) ||
-                other.amountPaid == amountPaid));
+                other.amountPaid == amountPaid) &&
+            (identical(other.showLogo, showLogo) ||
+                other.showLogo == showLogo) &&
+            (identical(other.showSignature, showSignature) ||
+                other.showSignature == showSignature));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -259,6 +297,8 @@ class _$InvoiceImpl extends _Invoice {
     const DeepCollectionEquality().hash(_items),
     paymentStatus,
     amountPaid,
+    showLogo,
+    showSignature,
   );
 
   /// Create a copy of Invoice
@@ -283,6 +323,8 @@ abstract class _Invoice extends Invoice {
     required final List<ServiceItem> items,
     required final PaymentStatus paymentStatus,
     required final double amountPaid,
+    final bool showLogo,
+    final bool showSignature,
   }) = _$InvoiceImpl;
   const _Invoice._() : super._();
 
@@ -300,6 +342,10 @@ abstract class _Invoice extends Invoice {
   PaymentStatus get paymentStatus;
   @override
   double get amountPaid;
+  @override
+  bool get showLogo;
+  @override
+  bool get showSignature;
 
   /// Create a copy of Invoice
   /// with the given fields replaced by the non-null parameter values.
