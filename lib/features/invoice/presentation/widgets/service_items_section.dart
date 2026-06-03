@@ -77,10 +77,7 @@ class ServiceItemsSection extends ConsumerWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: formState.items.length,
-                separatorBuilder: (context, index) => const Divider(
-                  height: 24,
-                  color: Color(0xFFE2E8F0),
-                ),
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final item = formState.items[index];
                   return ServiceItemFormRow(
@@ -133,8 +130,7 @@ class _ServiceItemFormRowState extends State<ServiceItemFormRow> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.item.name);
-    _qtyController = TextEditingController(
-        text: widget.item.quantity > 0 ? widget.item.quantity.toString() : '');
+    _qtyController = TextEditingController(text: widget.item.quantity.toString());
     _priceController = TextEditingController(
         text: widget.item.unitPrice > 0 ? widget.item.unitPrice.toString() : '');
   }
@@ -142,21 +138,34 @@ class _ServiceItemFormRowState extends State<ServiceItemFormRow> {
   @override
   void didUpdateWidget(covariant ServiceItemFormRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Keep controllers in sync only if values change outside editing
+    
+    // Check if name has changed externally
     if (widget.item.name != _nameController.text) {
+      final cursorPosition = _nameController.selection;
       _nameController.text = widget.item.name;
+      try {
+        _nameController.selection = cursorPosition;
+      } catch (_) {}
     }
     
-    // Compare parsed integer values to avoid overwriting text currently being typed
-    final currentQty = int.tryParse(_qtyController.text) ?? 0;
+    // Check if quantity has changed externally
+    final currentQty = int.tryParse(_qtyController.text) ?? 1;
     if (widget.item.quantity != currentQty) {
-      _qtyController.text = widget.item.quantity > 0 ? widget.item.quantity.toString() : '';
+      final cursorPosition = _qtyController.selection;
+      _qtyController.text = widget.item.quantity.toString();
+      try {
+        _qtyController.selection = cursorPosition;
+      } catch (_) {}
     }
     
-    // Compare parsed double values to avoid overwriting text currently being typed (like trailing zeros or decimal points)
+    // Check if price has changed externally
     final currentPrice = double.tryParse(_priceController.text) ?? 0.0;
     if (widget.item.unitPrice != currentPrice) {
+      final cursorPosition = _priceController.selection;
       _priceController.text = widget.item.unitPrice > 0 ? widget.item.unitPrice.toString() : '';
+      try {
+        _priceController.selection = cursorPosition;
+      } catch (_) {}
     }
   }
 
@@ -168,118 +177,246 @@ class _ServiceItemFormRowState extends State<ServiceItemFormRow> {
     super.dispose();
   }
 
+  void _decrementQty() {
+    final currentVal = int.tryParse(_qtyController.text) ?? 1;
+    if (currentVal > 1) {
+      final newVal = currentVal - 1;
+      _qtyController.text = newVal.toString();
+      widget.onChanged(null, newVal, null);
+    }
+  }
+
+  void _incrementQty() {
+    final currentVal = int.tryParse(_qtyController.text) ?? 1;
+    final newVal = currentVal + 1;
+    _qtyController.text = newVal.toString();
+    widget.onChanged(null, newVal, null);
+  }
+
   @override
   Widget build(BuildContext context) {
     final itemTotal = widget.item.quantity * widget.item.unitPrice;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Item #${widget.index + 1}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
-              ),
-            ),
-            IconButton(
-              onPressed: widget.onDelete,
-              icon: const Icon(
-                Icons.delete_outline_rounded,
-                color: Colors.redAccent,
-              ),
-              tooltip: 'Delete item',
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _nameController,
-          decoration: const InputDecoration(
-            labelText: 'Service / Item Name *',
-            hintText: 'e.g. AC Water Service',
-            prefixIcon: Icon(Icons.handyman_outlined),
-          ),
-          onChanged: (val) => widget.onChanged(val, null, null),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: TextFormField(
-                controller: _qtyController,
-                decoration: const InputDecoration(
-                  labelText: 'Qty *',
-                  prefixIcon: Icon(Icons.unfold_more_rounded),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                onChanged: (val) {
-                  final qty = int.tryParse(val) ?? 0;
-                  widget.onChanged(null, qty, null);
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: TextFormField(
-                controller: _priceController,
-                decoration: const InputDecoration(
-                  labelText: 'Unit Price *',
-                  prefixIcon: Icon(Icons.currency_rupee_rounded),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                onChanged: (val) {
-                  final price = double.tryParse(val) ?? 0.0;
-                  widget.onChanged(null, null, price);
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: Container(
-                padding: const EdgeInsets.all(12),
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDF2F7),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Text(
+                  'ITEM #${widget.index + 1}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: widget.onDelete,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red.withValues(alpha: 0.1),
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.all(8),
+                  minimumSize: const Size(36, 36),
+                ),
+                icon: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                ),
+                tooltip: 'Delete item',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: _nameController,
+            decoration: const InputDecoration(
+              labelText: 'Service / Item Name *',
+              hintText: 'e.g. AC Water Service',
+              prefixIcon: Icon(Icons.handyman_outlined, size: 20),
+            ),
+            onChanged: (val) => widget.onChanged(val, null, null),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Unit Price
+              Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Total',
+                      'Unit Price',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         color: Color(0xFF64748B),
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        '${AppConstants.currencySymbol}${itemTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0F172A),
-                        ),
+                    const SizedBox(height: 6),
+                    TextFormField(
+                      controller: _priceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        hintText: '0.00',
+                        prefixIcon: Icon(Icons.currency_rupee_rounded, size: 16),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      onChanged: (val) {
+                        final price = double.tryParse(val) ?? 0.0;
+                        widget.onChanged(null, null, price);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Quantity Stepper
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Qty',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            onPressed: _decrementQty,
+                            icon: const Icon(Icons.remove_rounded, size: 20),
+                            color: const Color(0xFF475569),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 40,
+                            ),
+                          ),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _qtyController,
+                              textAlign: TextAlign.center,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                filled: false,
+                              ),
+                              onChanged: (val) {
+                                final qty = int.tryParse(val) ?? 1;
+                                widget.onChanged(null, qty, null);
+                              },
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _incrementQty,
+                            icon: const Icon(Icons.add_rounded, size: 20),
+                            color: const Color(0xFF475569),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 40,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(
+                    Icons.receipt_outlined,
+                    size: 16,
+                    color: Color(0xFF64748B),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Item Total',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0277BD), Color(0xFF0097A7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0277BD).withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  '${AppConstants.currencySymbol}${itemTotal.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

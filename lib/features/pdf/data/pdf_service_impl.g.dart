@@ -6,7 +6,7 @@ part of 'pdf_service_impl.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$pdfServiceHash() => r'3bcdc595b3b3759f3134e043176e0693fa3a0457';
+String _$pdfServiceHash() => r'90f2426b4d7c8cc85db68e5996d32a5e9ab0a04e';
 
 /// See also [pdfService].
 @ProviderFor(pdfService)

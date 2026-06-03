@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/number_to_words.dart';
+import '../../company/domain/company_info.dart';
 import '../../invoice/domain/invoice.dart';
 import '../domain/pdf_service.dart';
 
@@ -19,7 +20,7 @@ PdfService pdfService(Ref ref) {
 
 class PdfServiceImpl implements PdfService {
   @override
-  Future<Uint8List> generateInvoicePdf(Invoice invoice) async {
+  Future<Uint8List> generateInvoicePdf(Invoice invoice, CompanyInfo companyInfo) async {
     final pdf = pw.Document();
 
     // Load signature image from assets
@@ -65,17 +66,17 @@ class PdfServiceImpl implements PdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      AppConstants.companyAddress,
+                      companyInfo.address,
                       style: pw.TextStyle(fontSize: 10, color: PdfColor.fromHex('#334155')),
                     ),
                     pw.SizedBox(height: 3),
                     pw.Text(
-                      'Phone no.: ${AppConstants.companyPhone}',
+                      'Phone no.: ${companyInfo.phone}',
                       style: pw.TextStyle(fontSize: 9.5, color: PdfColor.fromHex('#334155')),
                     ),
                     pw.SizedBox(height: 3),
                     pw.Text(
-                      'Email: ${AppConstants.companyEmail}',
+                      'Email: ${companyInfo.email}',
                       style: pw.TextStyle(fontSize: 9.5, color: PdfColor.fromHex('#334155')),
                     ),
                   ],
@@ -338,7 +339,7 @@ class PdfServiceImpl implements PdfService {
                         crossAxisAlignment: pw.CrossAxisAlignment.end,
                         children: [
                           pw.Text(
-                            'For: ${AppConstants.companyName}',
+                            'For: ${companyInfo.name}',
                             style: pw.TextStyle(font: baseFont, fontSize: 8),
                           ),
                           pw.SizedBox(height: 8),

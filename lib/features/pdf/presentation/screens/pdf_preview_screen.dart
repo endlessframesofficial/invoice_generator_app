@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/pdf_service_impl.dart';
+import '../../../company/presentation/providers/company_provider.dart';
 import '../../../invoice/domain/invoice.dart';
 import '../../../invoice/presentation/providers/invoice_notifier.dart';
 
@@ -26,8 +27,9 @@ class PdfPreviewScreen extends ConsumerWidget {
         ),
       );
 
+      final companyInfo = ref.read(companyInfoStateProvider);
       final pdfService = ref.read(pdfServiceProvider);
-      final pdfBytes = await pdfService.generateInvoicePdf(invoice);
+      final pdfBytes = await pdfService.generateInvoicePdf(invoice, companyInfo);
       
       // Save PDF to temporary folder so other apps like WhatsApp can access the file path provider URI properly
       final tempDir = await getTemporaryDirectory();
@@ -49,7 +51,7 @@ class PdfPreviewScreen extends ConsumerWidget {
         [XFile(file.path)],
         subject: 'Invoice ${invoice.invoiceNumber} for ${invoice.customer.name}',
         text: 'Hello *${invoice.customer.name}*,\n\n'
-            'Please find attached your invoice *${invoice.invoiceNumber}* from *Cochin Cool Service*.\n\n'
+            'Please find attached your invoice *${invoice.invoiceNumber}* from *${companyInfo.name}*.\n\n'
             '• Total Amount: Rs. ${invoice.totalAmount.toStringAsFixed(2)}\n'
             '• Status: *$paymentStatusLabel*',
       );
@@ -71,6 +73,7 @@ class PdfPreviewScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final invoice = ref.watch(currentInvoiceProvider);
+    final companyInfo = ref.watch(companyInfoStateProvider);
     final pdfService = ref.watch(pdfServiceProvider);
 
     if (invoice == null) {
@@ -101,7 +104,7 @@ class PdfPreviewScreen extends ConsumerWidget {
         title: Text('Invoice ${invoice.invoiceNumber}'),
       ),
       body: PdfPreview(
-        build: (format) => pdfService.generateInvoicePdf(invoice),
+        build: (format) => pdfService.generateInvoicePdf(invoice, companyInfo),
         allowPrinting: false,
         allowSharing: false,
         canChangePageFormat: false,

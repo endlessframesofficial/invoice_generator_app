@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../company/presentation/providers/company_provider.dart';
 import '../providers/invoice_notifier.dart';
+import '../widgets/company_section.dart';
 import '../widgets/customer_section.dart';
 import '../widgets/service_items_section.dart';
 
@@ -55,6 +57,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(invoiceNotifierProvider);
+    final companyInfo = ref.watch(companyInfoStateProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -121,22 +124,22 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            AppConstants.companyName,
-                            style: TextStyle(
+                            companyInfo.name,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Text(
-                            AppConstants.companyAddress,
-                            style: TextStyle(
+                            companyInfo.address,
+                            style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
                             ),
@@ -147,6 +150,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              
+              // Company Information Settings Card
+              const CompanySection(),
               const SizedBox(height: 16),
               
               // Customer Information Card
