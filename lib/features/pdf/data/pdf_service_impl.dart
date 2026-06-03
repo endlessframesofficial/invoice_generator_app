@@ -54,9 +54,22 @@ class PdfServiceImpl implements PdfService {
 
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
-        theme: pw.ThemeData.withFont(base: baseFont, bold: boldFont),
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          theme: pw.ThemeData.withFont(base: baseFont, bold: boldFont),
+          buildBackground: (pw.Context context) {
+            if (invoice.paymentStatus == PaymentStatus.paid && paidSealImage != null) {
+              return pw.FullPage(
+                ignoreMargins: false,
+                child: pw.Center(
+                  child: _paidStamp(paidSealImage),
+                ),
+              );
+            }
+            return pw.SizedBox();
+          },
+        ),
         build: (pw.Context context) {
           return [
             // ─── 1. HEADER: Company Info + Logo ───
@@ -336,77 +349,66 @@ class PdfServiceImpl implements PdfService {
             pw.SizedBox(height: 20),
 
             // ─── 6. TERMS & SIGNATURE ───
-            pw.Stack(
-              alignment: pw.Alignment.bottomRight,
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
               children: [
-                pw.Row(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Expanded(
-                      flex: 3,
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text('Terms & Conditions', style: pw.TextStyle(font: boldFont, fontSize: 9, color: _mutedText)),
-                          pw.SizedBox(height: 3),
-                          pw.Text(
-                            AppConstants.termsAndConditions,
-                            style: pw.TextStyle(fontSize: 7.5, color: PdfColors.black),
-                          ),
-                        ],
+                pw.Expanded(
+                  flex: 3,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text('Terms & Conditions', style: pw.TextStyle(font: boldFont, fontSize: 9, color: _mutedText)),
+                      pw.SizedBox(height: 3),
+                      pw.Text(
+                        AppConstants.termsAndConditions,
+                        style: pw.TextStyle(fontSize: 7.5, color: PdfColors.black),
                       ),
-                    ),
-                    pw.SizedBox(width: 20),
-                    pw.Expanded(
-                      flex: 2,
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.center,
-                        children: [
-                          pw.Text('For: ${companyInfo.name}', style: pw.TextStyle(font: baseFont, fontSize: 8, color: _mutedText)),
-                          pw.SizedBox(height: 6),
-                          if (invoice.showSignature && signatureImage != null) ...[
-                            pw.Image(signatureImage, width: 80, height: 40, fit: pw.BoxFit.contain),
-                            pw.SizedBox(height: 4),
-                            pw.Container(
-                              width: 120,
-                              decoration: pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: _mutedText, width: 0.5))),
-                              padding: const pw.EdgeInsets.only(top: 4),
-                              child: pw.Text(
-                                'Authorized Signatory',
-                                textAlign: pw.TextAlign.center,
-                                style: pw.TextStyle(font: boldFont, fontSize: 8),
-                              ),
-                            ),
-                          ] else ...[
-                            pw.Container(
-                              padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: pw.BoxDecoration(
-                                border: pw.Border.all(color: PdfColors.black, width: 0.5),
-                                borderRadius: pw.BorderRadius.circular(4),
-                              ),
-                              child: pw.Text(
-                                '[Electronically Signed]',
-                                style: pw.TextStyle(font: baseFont, fontSize: 8, color: PdfColors.black, fontStyle: pw.FontStyle.italic),
-                              ),
-                            ),
-                            pw.SizedBox(height: 6),
-                            pw.Text(
-                              'Computer-generated invoice.\nNo physical signature required.',
-                              textAlign: pw.TextAlign.center,
-                              style: pw.TextStyle(font: baseFont, fontSize: 7, color: PdfColors.black),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                if (invoice.paymentStatus == PaymentStatus.paid)
-                  pw.Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: _paidStamp(paidSealImage),
+                    ],
                   ),
+                ),
+                pw.SizedBox(width: 20),
+                pw.Expanded(
+                  flex: 2,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Text('For: ${companyInfo.name}', style: pw.TextStyle(font: baseFont, fontSize: 8, color: _mutedText)),
+                      pw.SizedBox(height: 6),
+                      if (invoice.showSignature && signatureImage != null) ...[
+                        pw.Image(signatureImage, width: 80, height: 40, fit: pw.BoxFit.contain),
+                        pw.SizedBox(height: 4),
+                        pw.Container(
+                          width: 120,
+                          decoration: pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: _mutedText, width: 0.5))),
+                          padding: const pw.EdgeInsets.only(top: 4),
+                          child: pw.Text(
+                            'Authorized Signatory',
+                            textAlign: pw.TextAlign.center,
+                            style: pw.TextStyle(font: boldFont, fontSize: 8),
+                          ),
+                        ),
+                      ] else ...[
+                        pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: pw.BoxDecoration(
+                            border: pw.Border.all(color: PdfColors.black, width: 0.5),
+                            borderRadius: pw.BorderRadius.circular(4),
+                          ),
+                          child: pw.Text(
+                            '[Electronically Signed]',
+                            style: pw.TextStyle(font: baseFont, fontSize: 8, color: PdfColors.black, fontStyle: pw.FontStyle.italic),
+                          ),
+                        ),
+                        pw.SizedBox(height: 6),
+                        pw.Text(
+                          'Computer-generated invoice.\nNo physical signature required.',
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(font: baseFont, fontSize: 7, color: PdfColors.black),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ];
@@ -476,8 +478,8 @@ class PdfServiceImpl implements PdfService {
     return pw.Transform.rotate(
       angle: 0.15,
       child: pw.Opacity(
-        opacity: 0.45,
-        child: pw.Image(paidSealImage, width: 75, height: 75, fit: pw.BoxFit.contain),
+        opacity: 0.12,
+        child: pw.Image(paidSealImage, width: 220, height: 220, fit: pw.BoxFit.contain),
       ),
     );
   }
