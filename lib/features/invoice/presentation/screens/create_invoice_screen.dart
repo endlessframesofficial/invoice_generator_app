@@ -39,13 +39,9 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     final invoice = notifier.generateInvoice();
     
     if (invoice != null) {
-      // Set the active invoice in the current invoice provider
       ref.read(currentInvoiceProvider.notifier).setInvoice(invoice);
-      
-      // Navigate to PDF Preview screen
       context.push('/pdf-preview');
     } else {
-      // Show validation error from Riverpod state
       final errorMsg = ref.read(invoiceNotifierProvider).errorMessage ?? 'Validation failed';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -62,16 +58,79 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     final companyInfo = ref.watch(companyInfoStateProvider);
 
     return Scaffold(
+      drawer: Drawer(
+        backgroundColor: const Color(0xFFF8FAFC),
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0277BD), Color(0xFF01579B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Icon(Icons.ac_unit_rounded, color: Color(0xFF0277BD), size: 40),
+              ),
+              accountName: Text(
+                companyInfo.name,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              accountEmail: Text(companyInfo.email),
+            ),
+            ListTile(
+              leading: const Icon(Icons.dashboard_rounded, color: Color(0xFF0277BD)),
+              title: const Text('New Invoice', style: TextStyle(fontWeight: FontWeight.w600)),
+              selected: true,
+              selectedTileColor: const Color(0xFF0277BD).withOpacity(0.1),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.history_rounded),
+              title: const Text('Recent Bills'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/recent-invoices');
+              },
+            ),
+            const Divider(),
+            const Spacer(),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Text(
+                    'Enne Marakkalle',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Powered by Ajith',
+                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
-        title: const Text('Create Service Invoice'),
+        title: const Text('Service Invoice'),
+        centerTitle: true,
         actions: [
           IconButton(
             onPressed: () {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Reset Form?'),
-                  content: const Text('This will clear all customer information and service items.'),
+                  title: const Text('Clear Form?'),
+                  content: const Text('This will reset all current service entries.'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
@@ -82,48 +141,55 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                         ref.read(invoiceNotifierProvider.notifier).resetForm();
                         Navigator.pop(context);
                       },
-                      child: const Text('Reset', style: TextStyle(color: Colors.redAccent)),
+                      child: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
                     ),
                   ],
                 ),
               );
             },
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Reset form',
+            icon: const Icon(Icons.layers_clear_rounded),
+            tooltip: 'Clear form',
           ),
         ],
       ),
       body: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120), // Bottom padding to prevent overlap with summary bar
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Premium banner mimicking the service company
+              // Premium branding banner for AC Mechanics
               FadeInSlide(
                 child: Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF0277BD), Color(0xFF0097A7)],
+                      colors: [Color(0xFF0288D1), Color(0xFF26C6DA)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0288D1).withOpacity(0.25),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: const BoxDecoration(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
                           color: Colors.white,
-                          shape: BoxShape.circle,
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         child: const Icon(
-                          Icons.handyman,
-                          color: Color(0xFF0277BD),
-                          size: 28,
+                          Icons.ac_unit_rounded,
+                          color: Color(0xFF0288D1),
+                          size: 32,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -132,58 +198,48 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              companyInfo.name,
+                              companyInfo.name.toUpperCase(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              companyInfo.address,
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
-                              ),
+                            Row(
+                              children: [
+                                const Icon(Icons.phone_android_rounded, color: Colors.white70, size: 14),
+                                const SizedBox(width: 6),
+                                Text(
+                                  companyInfo.phone,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
+                      const Icon(Icons.verified_rounded, color: Colors.white, size: 28),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               
-              // Company Information Settings Card
-              const FadeInSlide(
-                child: CompanySection(),
-              ),
+              const FadeInSlide(child: CompanySection()),
               const SizedBox(height: 16),
-              
-              // Customer Information Card
-              const FadeInSlide(
-                child: CustomerSection(),
-              ),
+              const FadeInSlide(child: CustomerSection()),
               const SizedBox(height: 16),
-              
-              // Service Items Card
-              const FadeInSlide(
-                child: ServiceItemsSection(),
-              ),
+              const FadeInSlide(child: ServiceItemsSection()),
               const SizedBox(height: 16),
-              
-              // Payment Details Card
-              const FadeInSlide(
-                child: PaymentSection(),
-              ),
+              const FadeInSlide(child: PaymentSection()),
               const SizedBox(height: 16),
-              
-              // PDF Customization Settings Card
-              const FadeInSlide(
-                child: DocumentCustomizationSection(),
-              ),
+              const FadeInSlide(child: DocumentCustomizationSection()),
             ],
           ),
         ),
@@ -192,11 +248,12 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
+            border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 10,
-                offset: const Offset(0, -4),
+                offset: const Offset(0, -5),
               ),
             ],
           ),
@@ -209,18 +266,18 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'TOTAL AMOUNT',
+                      'TOTAL PAYABLE',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF64748B),
+                        letterSpacing: 1,
                       ),
                     ),
-                    const SizedBox(height: 2),
                     Text(
                       '${AppConstants.currencySymbol}${totalAmount.toStringAsFixed(2)}',
                       style: const TextStyle(
-                        fontSize: 22,
+                        fontSize: 24,
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF0F172A),
                       ),
@@ -230,10 +287,29 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: ElevatedButton.icon(
+                child: ElevatedButton(
                   onPressed: _handleGeneratePdf,
-                  icon: const Icon(Icons.picture_as_pdf_rounded),
-                  label: const Text('Generate Invoice'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0288D1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    elevation: 5,
+                    shadowColor: const Color(0xFF0288D1).withOpacity(0.4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.picture_as_pdf_rounded),
+                      SizedBox(width: 8),
+                      Text(
+                        'CREATE BILL',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

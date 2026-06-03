@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../customer/domain/customer.dart';
+import '../../data/invoice_repository.dart';
 import '../../domain/invoice.dart';
 import '../../domain/service_item.dart';
 import 'invoice_form_state.dart';
@@ -74,6 +75,13 @@ class InvoiceNotifier extends _$InvoiceNotifier {
   void updateInvoiceNumber(String number) {
     state = state.copyWith(
       generatedInvoiceNumber: number,
+      errorMessage: null,
+    );
+  }
+
+  void updateInvoiceDate(DateTime date) {
+    state = state.copyWith(
+      generatedInvoiceDate: date,
       errorMessage: null,
     );
   }
@@ -236,7 +244,7 @@ class InvoiceNotifier extends _$InvoiceNotifier {
       finalAmountPaid = state.amountPaid;
     }
 
-    return Invoice(
+    final invoice = Invoice(
       invoiceNumber: invoiceNumber,
       invoiceDate: invoiceDate,
       customer: customer,
@@ -245,6 +253,28 @@ class InvoiceNotifier extends _$InvoiceNotifier {
       amountPaid: finalAmountPaid,
       showLogo: state.showLogo,
       showSignature: state.showSignature,
+    );
+
+    // Persist the invoice
+    ref.read(invoiceRepositoryProvider).saveInvoice(invoice);
+
+    return invoice;
+  }
+
+  /// Loads a previous invoice into the form
+  void loadInvoice(Invoice invoice) {
+    state = InvoiceFormState(
+      customerName: invoice.customer.name,
+      customerPhone: invoice.customer.phone,
+      customerEmail: invoice.customer.email,
+      customerAddress: invoice.customer.address,
+      items: invoice.items,
+      paymentStatus: invoice.paymentStatus,
+      amountPaid: invoice.amountPaid,
+      showLogo: invoice.showLogo,
+      showSignature: invoice.showSignature,
+      generatedInvoiceNumber: invoice.invoiceNumber,
+      generatedInvoiceDate: invoice.invoiceDate,
     );
   }
 
