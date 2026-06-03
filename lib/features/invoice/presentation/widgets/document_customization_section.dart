@@ -34,6 +34,21 @@ class DocumentCustomizationSection extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
+
+            // Invoice Number Input
+            TextFormField(
+              initialValue: formState.generatedInvoiceNumber,
+              decoration: const InputDecoration(
+                labelText: 'Invoice Number (Optional)',
+                hintText: 'Leave empty to auto-generate',
+                prefixIcon: Icon(Icons.numbers),
+                border: OutlineInputBorder(),
+                helperText: 'e.g., INV-2024-001',
+              ),
+              onChanged: notifier.updateInvoiceNumber,
+            ),
+
+            const SizedBox(height: 16),
             
             // Show Logo Switch
             SwitchListTile.adaptive(

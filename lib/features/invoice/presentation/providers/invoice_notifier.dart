@@ -71,6 +71,13 @@ class InvoiceNotifier extends _$InvoiceNotifier {
     );
   }
 
+  void updateInvoiceNumber(String number) {
+    state = state.copyWith(
+      generatedInvoiceNumber: number,
+      errorMessage: null,
+    );
+  }
+
   void updateCustomerName(String name) {
     state = state.copyWith(
       customerName: name,
@@ -203,8 +210,9 @@ class InvoiceNotifier extends _$InvoiceNotifier {
       return null;
     }
 
-    final invoiceNumber = state.generatedInvoiceNumber ?? 
-        'INV-${DateTime.now().year}${(100 + DateTime.now().minute)}${DateTime.now().second}';
+    final invoiceNumber = (state.generatedInvoiceNumber != null && state.generatedInvoiceNumber!.trim().isNotEmpty)
+        ? state.generatedInvoiceNumber!
+        : 'INV-${DateTime.now().year}${(100 + DateTime.now().minute)}${DateTime.now().second}';
     final invoiceDate = state.generatedInvoiceDate ?? DateTime.now();
 
     // Cache invoice info in state so it remains consistent
