@@ -220,7 +220,7 @@ class InvoiceNotifier extends _$InvoiceNotifier {
 
     final invoiceNumber = (state.generatedInvoiceNumber != null && state.generatedInvoiceNumber!.trim().isNotEmpty)
         ? state.generatedInvoiceNumber!
-        : 'INV-${DateTime.now().year}${(100 + DateTime.now().minute)}${DateTime.now().second}';
+        : '${DateTime.now().year}${(100 + DateTime.now().minute)}${DateTime.now().second}';
     final invoiceDate = state.generatedInvoiceDate ?? DateTime.now();
 
     // Cache invoice info in state so it remains consistent
