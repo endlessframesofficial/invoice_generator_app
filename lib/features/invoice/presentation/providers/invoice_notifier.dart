@@ -79,7 +79,7 @@ class InvoiceNotifier extends _$InvoiceNotifier {
     );
   }
 
-  void updateInvoiceDate(DateTime date) {
+  void updateInvoiceDate(DateTime? date) {
     state = state.copyWith(
       generatedInvoiceDate: date,
       errorMessage: null,

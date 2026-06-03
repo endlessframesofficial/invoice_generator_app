@@ -22,7 +22,7 @@ class PdfServiceImpl implements PdfService {
   // Brand colors
   static final _brandBlue = PdfColor.fromHex('#0277BD');
   static final _darkText = PdfColor.fromHex('#1E293B');
-  static final _mutedText = PdfColor.fromHex('#64748B');
+  static final _mutedText = PdfColors.black;
   static final _borderColor = PdfColor.fromHex('#E2E8F0');
   static final _bgLight = PdfColor.fromHex('#F8FAFC');
 
@@ -44,6 +44,7 @@ class PdfServiceImpl implements PdfService {
     final signatureImage = await _safeLoadImage('assets/images/signature.jpg');
     final logoImage = await _safeLoadImage('assets/images/ccs_logo.png');
     final upiLogosImage = await _safeLoadImage('assets/images/upi_logos.jpg');
+    final paidSealImage = await _safeLoadImage('assets/images/paid_seal.png');
 
     final dateFormat = DateFormat('dd-MM-yyyy');
     final rupeeFormat = NumberFormat.currency(locale: 'en_IN', symbol: 'Rs. ', decimalDigits: 2);
@@ -78,11 +79,11 @@ class PdfServiceImpl implements PdfService {
                         style: pw.TextStyle(font: boldFont, fontSize: 16, color: _brandBlue, letterSpacing: 1),
                       ),
                       pw.SizedBox(height: 4),
-                      pw.Text(companyInfo.address, style: pw.TextStyle(fontSize: 9, color: _mutedText)),
+                      pw.Text(companyInfo.address, style: pw.TextStyle(font: boldFont, fontSize: 9, color: PdfColors.black)),
                       pw.SizedBox(height: 2),
-                      pw.Text('Phone: ${companyInfo.phone}', style: pw.TextStyle(fontSize: 9, color: _mutedText)),
+                      pw.Text('Phone: ${companyInfo.phone}', style: pw.TextStyle(font: boldFont, fontSize: 9, color: PdfColors.black)),
                       if (companyInfo.email.isNotEmpty)
-                        pw.Text('Email: ${companyInfo.email}', style: pw.TextStyle(fontSize: 9, color: _mutedText)),
+                        pw.Text('Email: ${companyInfo.email}', style: pw.TextStyle(font: boldFont, fontSize: 9, color: PdfColors.black)),
                     ],
                   ),
                 ),
@@ -134,7 +135,7 @@ class PdfServiceImpl implements PdfService {
                         ),
                         if (invoice.customer.address.isNotEmpty) ...[
                           pw.SizedBox(height: 2),
-                          pw.Text(invoice.customer.address, style: pw.TextStyle(fontSize: 9, color: _mutedText)),
+                          pw.Text(invoice.customer.address, style: pw.TextStyle(font: boldFont, fontSize: 9, color: PdfColors.black)),
                         ],
                       ],
                     ),
@@ -143,10 +144,10 @@ class PdfServiceImpl implements PdfService {
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
                       if (invoice.customer.phone.isNotEmpty)
-                        pw.Text('Phone: ${invoice.customer.phone}', style: pw.TextStyle(fontSize: 9, color: _mutedText)),
+                        pw.Text('Phone: ${invoice.customer.phone}', style: pw.TextStyle(font: boldFont, fontSize: 9, color: PdfColors.black)),
                       if (invoice.customer.email.isNotEmpty) ...[
                         pw.SizedBox(height: 2),
-                        pw.Text('Email: ${invoice.customer.email}', style: pw.TextStyle(fontSize: 9, color: _mutedText)),
+                        pw.Text('Email: ${invoice.customer.email}', style: pw.TextStyle(font: boldFont, fontSize: 9, color: PdfColors.black)),
                       ],
                     ],
                   ),
@@ -233,10 +234,8 @@ class PdfServiceImpl implements PdfService {
                           style: pw.TextStyle(font: boldFont, fontSize: 9, color: _darkText),
                         ),
                       ),
-                      if (invoice.paymentStatus == PaymentStatus.paid) ...[
-                        pw.SizedBox(height: 12),
-                        pw.Center(child: _paidStamp()),
-                      ],
+                      // Paid seal is now positioned in the bottom right corner
+
                     ],
                   ),
                 ),
@@ -337,66 +336,77 @@ class PdfServiceImpl implements PdfService {
             pw.SizedBox(height: 20),
 
             // ─── 6. TERMS & SIGNATURE ───
-            pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.end,
+            pw.Stack(
+              alignment: pw.Alignment.bottomRight,
               children: [
-                pw.Expanded(
-                  flex: 3,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text('Terms & Conditions', style: pw.TextStyle(font: boldFont, fontSize: 9, color: _mutedText)),
-                      pw.SizedBox(height: 3),
-                      pw.Text(
-                        AppConstants.termsAndConditions,
-                        style: pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600),
+                pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Expanded(
+                      flex: 3,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Terms & Conditions', style: pw.TextStyle(font: boldFont, fontSize: 9, color: _mutedText)),
+                          pw.SizedBox(height: 3),
+                          pw.Text(
+                            AppConstants.termsAndConditions,
+                            style: pw.TextStyle(fontSize: 7.5, color: PdfColors.black),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    pw.SizedBox(width: 20),
+                    pw.Expanded(
+                      flex: 2,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.center,
+                        children: [
+                          pw.Text('For: ${companyInfo.name}', style: pw.TextStyle(font: baseFont, fontSize: 8, color: _mutedText)),
+                          pw.SizedBox(height: 6),
+                          if (invoice.showSignature && signatureImage != null) ...[
+                            pw.Image(signatureImage, width: 80, height: 40, fit: pw.BoxFit.contain),
+                            pw.SizedBox(height: 4),
+                            pw.Container(
+                              width: 120,
+                              decoration: pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: _mutedText, width: 0.5))),
+                              padding: const pw.EdgeInsets.only(top: 4),
+                              child: pw.Text(
+                                'Authorized Signatory',
+                                textAlign: pw.TextAlign.center,
+                                style: pw.TextStyle(font: boldFont, fontSize: 8),
+                              ),
+                            ),
+                          ] else ...[
+                            pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: pw.BoxDecoration(
+                                border: pw.Border.all(color: PdfColors.black, width: 0.5),
+                                borderRadius: pw.BorderRadius.circular(4),
+                              ),
+                              child: pw.Text(
+                                '[Electronically Signed]',
+                                style: pw.TextStyle(font: baseFont, fontSize: 8, color: PdfColors.black, fontStyle: pw.FontStyle.italic),
+                              ),
+                            ),
+                            pw.SizedBox(height: 6),
+                            pw.Text(
+                              'Computer-generated invoice.\nNo physical signature required.',
+                              textAlign: pw.TextAlign.center,
+                              style: pw.TextStyle(font: baseFont, fontSize: 7, color: PdfColors.black),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                pw.SizedBox(width: 20),
-                pw.Expanded(
-                  flex: 2,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.center,
-                    children: [
-                      pw.Text('For: ${companyInfo.name}', style: pw.TextStyle(font: baseFont, fontSize: 8, color: _mutedText)),
-                      pw.SizedBox(height: 6),
-                      if (invoice.showSignature && signatureImage != null) ...[
-                        pw.Image(signatureImage, width: 80, height: 40, fit: pw.BoxFit.contain),
-                        pw.SizedBox(height: 4),
-                        pw.Container(
-                          width: 120,
-                          decoration: pw.BoxDecoration(border: pw.Border(top: pw.BorderSide(color: _mutedText, width: 0.5))),
-                          padding: const pw.EdgeInsets.only(top: 4),
-                          child: pw.Text(
-                            'Authorized Signatory',
-                            textAlign: pw.TextAlign.center,
-                            style: pw.TextStyle(font: boldFont, fontSize: 8),
-                          ),
-                        ),
-                      ] else ...[
-                        pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
-                            borderRadius: pw.BorderRadius.circular(4),
-                          ),
-                          child: pw.Text(
-                            '[Electronically Signed]',
-                            style: pw.TextStyle(font: baseFont, fontSize: 8, color: PdfColors.grey700, fontStyle: pw.FontStyle.italic),
-                          ),
-                        ),
-                        pw.SizedBox(height: 6),
-                        pw.Text(
-                          'Computer-generated invoice.\nNo physical signature required.',
-                          textAlign: pw.TextAlign.center,
-                          style: pw.TextStyle(font: baseFont, fontSize: 7, color: PdfColors.grey500),
-                        ),
-                      ],
-                    ],
+                if (invoice.paymentStatus == PaymentStatus.paid)
+                  pw.Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: _paidStamp(paidSealImage),
                   ),
-                ),
               ],
             ),
           ];
@@ -461,24 +471,13 @@ class PdfServiceImpl implements PdfService {
     );
   }
 
-  pw.Widget _paidStamp() {
+  pw.Widget _paidStamp(pw.MemoryImage? paidSealImage) {
+    if (paidSealImage == null) return pw.SizedBox();
     return pw.Transform.rotate(
-      angle: -0.15,
-      child: pw.Container(
-        padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: PdfColor.fromHex('#4CAF50'), width: 2.5),
-          borderRadius: pw.BorderRadius.circular(6),
-        ),
-        child: pw.Text(
-          'PAID',
-          style: pw.TextStyle(
-            color: PdfColor.fromHex('#4CAF50'),
-            fontSize: 16,
-            fontWeight: pw.FontWeight.bold,
-            letterSpacing: 3,
-          ),
-        ),
+      angle: 0.15,
+      child: pw.Opacity(
+        opacity: 0.45,
+        child: pw.Image(paidSealImage, width: 75, height: 75, fit: pw.BoxFit.contain),
       ),
     );
   }

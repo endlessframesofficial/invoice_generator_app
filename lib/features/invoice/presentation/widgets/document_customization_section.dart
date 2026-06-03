@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../providers/invoice_notifier.dart';
 
 class DocumentCustomizationSection extends ConsumerWidget {
@@ -46,6 +47,42 @@ class DocumentCustomizationSection extends ConsumerWidget {
                 helperText: 'e.g., 2024-001',
               ),
               onChanged: notifier.updateInvoiceNumber,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Date Picker (Optional)
+            TextFormField(
+              key: ValueKey(formState.generatedInvoiceDate),
+              initialValue: formState.generatedInvoiceDate != null
+                  ? DateFormat('dd-MM-yyyy').format(formState.generatedInvoiceDate!)
+                  : '',
+              readOnly: true,
+              onTap: () async {
+                final selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: formState.generatedInvoiceDate ?? DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime(2100),
+                );
+                if (selectedDate != null) {
+                  notifier.updateInvoiceDate(selectedDate);
+                }
+              },
+              decoration: InputDecoration(
+                labelText: 'Bill Date (Optional)',
+                hintText: 'Leave empty for current date',
+                prefixIcon: const Icon(Icons.calendar_month_rounded),
+                suffixIcon: formState.generatedInvoiceDate != null
+                    ? IconButton(
+                        icon: const Icon(Icons.clear_rounded),
+                        onPressed: () {
+                          notifier.updateInvoiceDate(null);
+                        },
+                      )
+                    : null,
+                border: const OutlineInputBorder(),
+              ),
             ),
 
             const SizedBox(height: 16),
