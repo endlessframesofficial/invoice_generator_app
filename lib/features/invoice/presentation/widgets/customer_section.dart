@@ -2,12 +2,49 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/invoice_notifier.dart';
 
-class CustomerSection extends ConsumerWidget {
+class CustomerSection extends ConsumerStatefulWidget {
   const CustomerSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final formState = ref.watch(invoiceNotifierProvider);
+  ConsumerState<CustomerSection> createState() => _CustomerSectionState();
+}
+
+class _CustomerSectionState extends ConsumerState<CustomerSection> {
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _addressController;
+
+  @override
+  void initState() {
+    super.initState();
+    final formState = ref.read(invoiceNotifierProvider);
+    _nameController = TextEditingController(text: formState.customerName);
+    _phoneController = TextEditingController(text: formState.customerPhone);
+    _emailController = TextEditingController(text: formState.customerEmail);
+    _addressController = TextEditingController(text: formState.customerAddress);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Sync with resets: if customerName in provider is empty and our controller isn't, clear all
+    final providerName = ref.watch(invoiceNotifierProvider.select((s) => s.customerName));
+    if (providerName.isEmpty && _nameController.text.isNotEmpty) {
+      _nameController.clear();
+      _phoneController.clear();
+      _emailController.clear();
+      _addressController.clear();
+    }
+
     final notifier = ref.read(invoiceNotifierProvider.notifier);
 
     return Card(
@@ -35,7 +72,7 @@ class CustomerSection extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             TextFormField(
-              initialValue: formState.customerName,
+              controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Customer Name *',
                 prefixIcon: Icon(Icons.person_outline),
@@ -50,7 +87,7 @@ class CustomerSection extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             TextFormField(
-              initialValue: formState.customerPhone,
+              controller: _phoneController,
               decoration: const InputDecoration(
                 labelText: 'Phone Number *',
                 prefixIcon: Icon(Icons.phone_outlined),
@@ -66,7 +103,7 @@ class CustomerSection extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             TextFormField(
-              initialValue: formState.customerEmail,
+              controller: _emailController,
               decoration: const InputDecoration(
                 labelText: 'Email Address (Optional)',
                 prefixIcon: Icon(Icons.email_outlined),
@@ -76,7 +113,7 @@ class CustomerSection extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             TextFormField(
-              initialValue: formState.customerAddress,
+              controller: _addressController,
               decoration: const InputDecoration(
                 labelText: 'Site/Billing Address (Optional)',
                 prefixIcon: Icon(Icons.location_on_outlined),

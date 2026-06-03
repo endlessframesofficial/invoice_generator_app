@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/service_item.dart';
 import '../providers/invoice_notifier.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/widgets/fade_in_slide.dart';
 
 class ServiceItemsSection extends ConsumerWidget {
   const ServiceItemsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final formState = ref.watch(invoiceNotifierProvider);
+    final items = ref.watch(invoiceNotifierProvider.select((state) => state.items));
     final notifier = ref.read(invoiceNotifierProvider.notifier);
 
     return Card(
@@ -46,7 +47,7 @@ class ServiceItemsSection extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (formState.items.isEmpty)
+            if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24.0),
                 child: Center(
@@ -76,23 +77,26 @@ class ServiceItemsSection extends ConsumerWidget {
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: formState.items.length,
+                itemCount: items.length,
                 separatorBuilder: (context, index) => const SizedBox(height: 16),
                 itemBuilder: (context, index) {
-                  final item = formState.items[index];
-                  return ServiceItemFormRow(
-                    key: ValueKey(item.id),
-                    item: item,
-                    index: index,
-                    onChanged: (name, qty, price) {
-                      notifier.updateServiceItem(
-                        item.id,
-                        name: name,
-                        quantity: qty,
-                        unitPrice: price,
-                      );
-                    },
-                    onDelete: () => notifier.removeServiceItem(item.id),
+                  final item = items[index];
+                  return FadeInSlide(
+                    key: ValueKey('fade-${item.id}'),
+                    child: ServiceItemFormRow(
+                      key: ValueKey(item.id),
+                      item: item,
+                      index: index,
+                      onChanged: (name, qty, price) {
+                        notifier.updateServiceItem(
+                          item.id,
+                          name: name,
+                          quantity: qty,
+                          unitPrice: price,
+                        );
+                      },
+                      onDelete: () => notifier.removeServiceItem(item.id),
+                    ),
                   );
                 },
               ),

@@ -9,7 +9,9 @@ class PaymentSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final formState = ref.watch(invoiceNotifierProvider);
+    final paymentStatus = ref.watch(invoiceNotifierProvider.select((s) => s.paymentStatus));
+    final amountPaid = ref.watch(invoiceNotifierProvider.select((s) => s.amountPaid));
+    final totalAmount = ref.watch(invoiceNotifierProvider.select((s) => s.totalAmount));
     final notifier = ref.read(invoiceNotifierProvider.notifier);
 
     return Card(
@@ -58,7 +60,7 @@ class PaymentSection extends ConsumerWidget {
                     icon: Icon(Icons.check_circle_outline_rounded),
                   ),
                 ],
-                selected: <PaymentStatus>{formState.paymentStatus},
+                selected: <PaymentStatus>{paymentStatus},
                 onSelectionChanged: (Set<PaymentStatus> newSelection) {
                   notifier.updatePaymentStatus(newSelection.first);
                 },
@@ -66,14 +68,20 @@ class PaymentSection extends ConsumerWidget {
             ),
             
             // Animated input field for partially paid amount
-            if (formState.paymentStatus == PaymentStatus.partiallyPaid) ...[
-              const SizedBox(height: 16),
-              PartialAmountInputField(
-                amountPaid: formState.amountPaid,
-                totalAmount: formState.totalAmount,
-                onChanged: notifier.updateAmountPaid,
-              ),
-            ],
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubic,
+              child: paymentStatus == PaymentStatus.partiallyPaid
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: PartialAmountInputField(
+                        amountPaid: amountPaid,
+                        totalAmount: totalAmount,
+                        onChanged: notifier.updateAmountPaid,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
       ),

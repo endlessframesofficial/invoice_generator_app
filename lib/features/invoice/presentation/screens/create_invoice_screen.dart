@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/widgets/fade_in_slide.dart';
 import '../../../company/presentation/providers/company_provider.dart';
 import '../providers/invoice_notifier.dart';
 import '../widgets/company_section.dart';
@@ -57,7 +58,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(invoiceNotifierProvider);
+    final totalAmount = ref.watch(invoiceNotifierProvider.select((state) => state.totalAmount));
     final companyInfo = ref.watch(companyInfoStateProvider);
 
     return Scaffold(
@@ -100,77 +101,89 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Premium banner mimicking the service company
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0277BD), Color(0xFF0097A7)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              FadeInSlide(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0277BD), Color(0xFF0097A7)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.handyman,
+                          color: Color(0xFF0277BD),
+                          size: 28,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.handyman,
-                        color: Color(0xFF0277BD),
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            companyInfo.name,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              companyInfo.name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            companyInfo.address,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
+                            const SizedBox(height: 4),
+                            Text(
+                              companyInfo.address,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
               
               // Company Information Settings Card
-              const CompanySection(),
+              const FadeInSlide(
+                child: CompanySection(),
+              ),
               const SizedBox(height: 16),
               
               // Customer Information Card
-              const CustomerSection(),
+              const FadeInSlide(
+                child: CustomerSection(),
+              ),
               const SizedBox(height: 16),
-
+              
               // Service Items Card
-              const ServiceItemsSection(),
+              const FadeInSlide(
+                child: ServiceItemsSection(),
+              ),
               const SizedBox(height: 16),
-
+              
               // Payment Details Card
-              const PaymentSection(),
+              const FadeInSlide(
+                child: PaymentSection(),
+              ),
               const SizedBox(height: 16),
-
+              
               // PDF Customization Settings Card
-              const DocumentCustomizationSection(),
+              const FadeInSlide(
+                child: DocumentCustomizationSection(),
+              ),
             ],
           ),
         ),
@@ -205,7 +218,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${AppConstants.currencySymbol}${formState.totalAmount.toStringAsFixed(2)}',
+                      '${AppConstants.currencySymbol}${totalAmount.toStringAsFixed(2)}',
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
