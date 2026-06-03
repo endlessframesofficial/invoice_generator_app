@@ -1,6 +1,6 @@
 {
-    "name": "invoice_generator_app",
-    "short_name": "invoice_generator_app",
+    "name": "Enne Marakkalle",
+    "short_name": "Enne Marakkalle",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
