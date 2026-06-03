@@ -27,6 +27,11 @@ class PdfServiceImpl implements PdfService {
     final signatureBytes = signatureByteData.buffer.asUint8List();
     final signatureImage = pw.MemoryImage(signatureBytes);
 
+    // Load company logo image from assets
+    final logoByteData = await rootBundle.load('assets/images/ccs_logo.png');
+    final logoBytes = logoByteData.buffer.asUint8List();
+    final logoImage = pw.MemoryImage(logoBytes);
+
     final dateFormat = DateFormat('dd-MM-yyyy');
     
     // Custom NumberFormat for Indian Rupees formatting (₹ 1,200.00)
@@ -54,76 +59,33 @@ class PdfServiceImpl implements PdfService {
             // 1. HEADER SECTION
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      AppConstants.companyName,
-                      style: pw.TextStyle(
-                        font: boldFont,
-                        fontSize: 18,
-                        color: PdfColor.fromHex('#000000'),
-                      ),
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Text(
                       AppConstants.companyAddress,
-                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                      style: pw.TextStyle(fontSize: 10, color: PdfColor.fromHex('#334155')),
                     ),
-                    pw.SizedBox(height: 2),
+                    pw.SizedBox(height: 3),
                     pw.Text(
                       'Phone no.: ${AppConstants.companyPhone}',
-                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                      style: pw.TextStyle(fontSize: 9.5, color: PdfColor.fromHex('#334155')),
                     ),
-                    pw.SizedBox(height: 2),
+                    pw.SizedBox(height: 3),
                     pw.Text(
                       'Email: ${AppConstants.companyEmail}',
-                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                      style: pw.TextStyle(fontSize: 9.5, color: PdfColor.fromHex('#334155')),
                     ),
                   ],
                 ),
-                // Logo box matching Cochin Cool Service logo look
-                pw.Container(
-                  width: 50,
-                  height: 50,
-                  decoration: pw.BoxDecoration(
-                    color: PdfColor.fromHex('#0D1B2A'),
-                    borderRadius: pw.BorderRadius.circular(4),
-                  ),
-                  alignment: pw.Alignment.center,
-                  child: pw.RichText(
-                    textAlign: pw.TextAlign.center,
-                    text: pw.TextSpan(
-                      children: [
-                        pw.TextSpan(
-                          text: 'c',
-                          style: pw.TextStyle(
-                            font: boldFont,
-                            fontSize: 16,
-                            color: PdfColor.fromHex('#00B4D8'),
-                          ),
-                        ),
-                        pw.TextSpan(
-                          text: 'c',
-                          style: pw.TextStyle(
-                            font: boldFont,
-                            fontSize: 16,
-                            color: PdfColor.fromHex('#FF4D6D'),
-                          ),
-                        ),
-                        pw.TextSpan(
-                          text: 's',
-                          style: pw.TextStyle(
-                            font: boldFont,
-                            fontSize: 16,
-                            color: PdfColors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                // Premium company logo image containing cartoon technician and company name
+                pw.Image(
+                  logoImage,
+                  width: 75,
+                  height: 75,
+                  fit: pw.BoxFit.contain,
                 ),
               ],
             ),
