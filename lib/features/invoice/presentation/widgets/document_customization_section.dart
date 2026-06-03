@@ -39,11 +39,11 @@ class DocumentCustomizationSection extends ConsumerWidget {
             TextFormField(
               initialValue: formState.generatedInvoiceNumber,
               decoration: const InputDecoration(
-                labelText: 'Invoice Number (Optional)',
+                labelText: 'Bill Number (Optional)',
                 hintText: 'Leave empty to auto-generate',
                 prefixIcon: Icon(Icons.numbers),
                 border: OutlineInputBorder(),
-                helperText: 'e.g., INV-2024-001',
+                helperText: 'e.g., 2024-001',
               ),
               onChanged: notifier.updateInvoiceNumber,
             ),
