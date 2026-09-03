@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/fade_in_slide.dart';
+import '../../../../main.dart';
 import '../../../company/presentation/providers/company_provider.dart';
 import '../providers/invoice_notifier.dart';
 import '../widgets/company_section.dart';
@@ -101,6 +102,14 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
               onTap: () {
                 Navigator.pop(context);
                 context.push('/onboarding');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_circle_outlined),
+              title: const Text('Account / Sign In'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/login');
               },
             ),
             const Divider(),
