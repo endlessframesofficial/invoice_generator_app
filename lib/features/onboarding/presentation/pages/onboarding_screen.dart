@@ -7,16 +7,12 @@ import '../../../../main.dart';
 class OnboardingStep {
   final String title;
   final String description;
-  final IconData icon;
-  final List<Color> gradientColors;
-  final String badgeText;
+  final Widget previewGraphic;
 
   const OnboardingStep({
     required this.title,
     required this.description,
-    required this.icon,
-    required this.gradientColors,
-    required this.badgeText,
+    required this.previewGraphic,
   });
 }
 
@@ -30,37 +26,6 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-
-  final List<OnboardingStep> _steps = const [
-    OnboardingStep(
-      title: 'Create Invoices Instantly',
-      description: 'Generate sleek, professional billing documents for your clients in seconds with automated tax & discount calculations.',
-      icon: Icons.receipt_long_rounded,
-      gradientColors: [Color(0xFF0277BD), Color(0xFF0097A7)],
-      badgeText: 'Step 1 of 4',
-    ),
-    OnboardingStep(
-      title: 'Customize Business & Payments',
-      description: 'Add your company details, logo, and integrated UPI payment QR codes for fast, seamless customer payments.',
-      icon: Icons.qr_code_2_rounded,
-      gradientColors: [Color(0xFF00838F), Color(0xFF00ACC1)],
-      badgeText: 'Step 2 of 4',
-    ),
-    OnboardingStep(
-      title: 'PDF Generation & Sharing',
-      description: 'Preview print-ready PDF invoices directly in the app. Print or share instantly via WhatsApp, email, or other apps.',
-      icon: Icons.picture_as_pdf_rounded,
-      gradientColors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
-      badgeText: 'Step 3 of 4',
-    ),
-    OnboardingStep(
-      title: 'Track & Manage Recent Bills',
-      description: 'Access your bill history, search past invoices easily, and recreate or re-share client bills anytime.',
-      icon: Icons.history_rounded,
-      gradientColors: [Color(0xFF2E7D32), Color(0xFF43A047)],
-      badgeText: 'Step 4 of 4',
-    ),
-  ];
 
   @override
   void dispose() {
@@ -76,179 +41,146 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
   }
 
-  void _nextPage() {
-    if (_currentPage < _steps.length - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
-      );
-    } else {
-      _completeOnboarding();
-    }
-  }
-
-  void _previousPage() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isLastPage = _currentPage == _steps.length - 1;
+    final steps = [
+      // Step 1: All-in-One Invoicing Solution
+      OnboardingStep(
+        title: 'All-in-One Invoicing Solution',
+        description: 'Get started with hassle-free invoicing and manage your finances efficiently.',
+        previewGraphic: _buildInvoiceMockupCard(),
+      ),
+      // Step 2: Custom Branding & QR Payments
+      OnboardingStep(
+        title: 'Instant UPI & QR Payments',
+        description: 'Collect payments 2x faster by embedding custom UPI QR codes directly on your invoices.',
+        previewGraphic: _buildQrMockupCard(),
+      ),
+      // Step 3: PDF Export & WhatsApp Sharing
+      OnboardingStep(
+        title: 'One-Tap PDF & WhatsApp Share',
+        description: 'Generate high-quality print-ready PDFs and send them to clients instantly via WhatsApp.',
+        previewGraphic: _buildShareMockupCard(),
+      ),
+    ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          if (!isLastPage)
-            TextButton(
-              onPressed: _completeOnboarding,
-              child: const Text(
-                'Skip',
-                style: TextStyle(
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-            ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            const SizedBox(height: 12),
+            // Header with logo and Skip
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.mintBackground,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.send_rounded,
+                          color: AppTheme.primaryColor,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'BILLINGBOOK',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: _completeOnboarding,
+                    child: const Text(
+                      'Skip',
+                      style: TextStyle(
+                        color: AppTheme.textMuted,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Page View Content
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                itemCount: _steps.length,
+                itemCount: steps.length,
                 onPageChanged: (index) {
                   setState(() {
                     _currentPage = index;
                   });
                 },
                 itemBuilder: (context, index) {
-                  final step = _steps[index];
+                  final step = steps[index];
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Visual Illustration Card
-                        Container(
-                          width: double.infinity,
-                          height: 240,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: step.gradientColors,
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                        // Top Graphic Area (Soft Mint Box)
+                        Expanded(
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.mintBackground.withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(28),
                             ),
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: step.gradientColors[0].withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: Stack(
-                            children: [
-                              // Background decorative circles
-                              Positioned(
-                                right: -20,
-                                top: -20,
-                                child: CircleAvatar(
-                                  radius: 70,
-                                  backgroundColor: Colors.white.withOpacity(0.1),
+                            child: Center(
+                              child: SingleChildScrollView(
+                                physics: const NeverScrollableScrollPhysics(),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20.0),
+                                  child: step.previewGraphic,
                                 ),
                               ),
-                              Positioned(
-                                left: -30,
-                                bottom: -30,
-                                child: CircleAvatar(
-                                  radius: 90,
-                                  backgroundColor: Colors.white.withOpacity(0.08),
-                                ),
-                              ),
-                              Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.3),
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        step.icon,
-                                        size: 64,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.25),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Text(
-                                        step.badgeText,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 24),
 
                         // Title
                         Text(
                           step.title,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 24,
+                            fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
-                            height: 1.2,
+                            color: AppTheme.textDark,
+                            letterSpacing: -0.3,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
 
-                        // Description
+                        // Subtitle
                         Text(
                           step.description,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 15,
-                            color: Color(0xFF64748B),
+                            fontSize: 14,
+                            color: AppTheme.textMuted,
                             height: 1.5,
                           ),
                         ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   );
@@ -256,93 +188,305 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
 
-            // Bottom Navigation Section
+            // Page Indicator Dots
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                steps.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  height: 8,
+                  width: _currentPage == index ? 24 : 8,
+                  decoration: BoxDecoration(
+                    color: _currentPage == index
+                        ? AppTheme.primaryColor
+                        : const Color(0xFFD1D5DB),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Bottom Buttons (Sign up / Get Started & Sign in)
             Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: Row(
                 children: [
-                  // Page indicator dots
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _steps.length,
-                      (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 8,
-                        width: _currentPage == index ? 24 : 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? const Color(0xFF0277BD)
-                              : const Color(0xFFCBD5E1),
-                          borderRadius: BorderRadius.circular(4),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _completeOnboarding,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        minimumSize: const Size.fromHeight(52),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Get Started',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 32),
-
-                  // Action Buttons
-                  Row(
-                    children: [
-                      if (_currentPage > 0) ...[
-                        OutlinedButton(
-                          onPressed: _previousPage,
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size(56, 52),
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_rounded,
-                            color: Color(0xFF0277BD),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _nextPage,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(52),
-                            backgroundColor: const Color(0xFF0277BD),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                isLastPage ? 'Get Started' : 'Continue',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                isLastPage
-                                    ? Icons.check_circle_outline_rounded
-                                    : Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ],
-                          ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _completeOnboarding,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        side: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                    ],
+                      child: const Text(
+                        'Sign in',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Mockup Invoice Card (Matches Screen 1 in design)
+  Widget _buildInvoiceMockupCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Amount Header
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.mintBackground,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Payment : INV-123',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '₹ 450.00',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+                CircleAvatar(
+                  backgroundColor: AppTheme.primaryColor,
+                  child: Icon(Icons.check_rounded, color: Colors.white, size: 20),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Customer Row
+          Row(
+            children: [
+              const CircleAvatar(
+                radius: 18,
+                backgroundColor: Color(0xFFE2E8F0),
+                child: Icon(Icons.person, color: Color(0xFF64748B), size: 20),
+              ),
+              const SizedBox(width: 10),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Nur Ahmed',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textDark,
+                    ),
+                  ),
+                  Text(
+                    'Feb 10, 2024',
+                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  'PAID',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF15803D),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+
+          // Items List
+          const Text(
+            'Billing Details',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildItemRow('5 New Mouse', '₹350'),
+          _buildItemRow('3 Color Soft Pad', '₹45'),
+          _buildItemRow('9 Optical Cable', '₹100'),
+          const Divider(height: 16),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'TOTAL',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.textDark),
+              ),
+              Text(
+                '₹495',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.primaryColor),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemRow(String title, String price) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 12, color: AppTheme.textDark)),
+          Text(price, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQrMockupCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.qr_code_2_rounded, size: 100, color: AppTheme.primaryColor),
+          const SizedBox(height: 12),
+          const Text(
+            'Scan & Pay via UPI',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textDark),
+          ),
+          const SizedBox(height: 4),
+          const Text('GooglePay • PhonePe • Paytm • BHIM', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareMockupCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(16)),
+                child: const Icon(Icons.share_rounded, size: 36, color: Color(0xFF15803D)),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: AppTheme.mintBackground, borderRadius: BorderRadius.circular(16)),
+                child: const Icon(Icons.picture_as_pdf_rounded, size: 36, color: AppTheme.primaryColor),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Instant PDF & WhatsApp Export',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textDark),
+          ),
+          const SizedBox(height: 4),
+          const Text('Send invoices to clients in one tap', style: TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+        ],
       ),
     );
   }

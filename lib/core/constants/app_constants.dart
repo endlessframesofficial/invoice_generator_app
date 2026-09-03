@@ -1,5 +1,5 @@
 class AppConstants {
-  static const String appName = 'Service Invoice Generator';
+  static const String appName = 'BillingBook';
 
   // Company Details (Default as per user's screenshot)
   static const String companyName = 'Cochin Cool Service';
