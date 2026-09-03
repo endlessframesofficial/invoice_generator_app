@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/fade_in_slide.dart';
+import '../../../../main.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../company/presentation/providers/company_provider.dart';
 import '../providers/invoice_notifier.dart';
 import '../widgets/company_section.dart';
@@ -182,6 +183,20 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             onTap: () {
               Navigator.pop(context);
               context.push('/login');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            onTap: () async {
+              Navigator.pop(context);
+              await ref.read(authRepositoryProvider).signOut();
+              final prefs = ref.read(sharedPreferencesProvider);
+              await prefs.setBool('is_logged_in', false);
+              await prefs.setBool('is_guest', false);
+              if (mounted) {
+                context.go('/login');
+              }
             },
           ),
           const Divider(),

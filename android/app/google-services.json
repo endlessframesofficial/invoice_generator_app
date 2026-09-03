@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "315790762482",
+    "project_id": "billingbook-app-ajith",
+    "storage_bucket": "billingbook-app-ajith.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:315790762482:android:d8b93f3ad3ad2b59d94b6b",
+        "android_client_info": {
+          "package_name": "com.example.invoice_generator_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOkUYvm20xAGGl7zHO0Y8s33V7dhy-LsY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
