@@ -95,6 +95,14 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                 context.push('/recent-invoices');
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.explore_outlined),
+              title: const Text('App Tour & Features'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/onboarding');
+              },
+            ),
             const Divider(),
             const Spacer(),
             const Padding(

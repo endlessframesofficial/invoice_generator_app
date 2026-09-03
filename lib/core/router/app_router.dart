@@ -4,15 +4,25 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/invoice/presentation/screens/create_invoice_screen.dart';
 import '../../features/invoice/presentation/screens/recent_invoices_screen.dart';
+import '../../features/onboarding/presentation/pages/onboarding_screen.dart';
 import '../../features/pdf/presentation/screens/pdf_preview_screen.dart';
+import '../../main.dart';
 
 part 'app_router.g.dart';
 
 @riverpod
 GoRouter appRouter(Ref ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
+
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: hasCompletedOnboarding ? '/' : '/onboarding',
     routes: [
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+      ),
       GoRoute(
         path: '/',
         name: 'create-invoice',
