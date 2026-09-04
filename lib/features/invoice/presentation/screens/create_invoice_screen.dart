@@ -27,6 +27,7 @@ class CreateInvoiceScreen extends ConsumerStatefulWidget {
 
 class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _invoicesTabKey = GlobalKey<_InvoicesTabState>();
   int _currentBottomNavIndex = 0;
 
   void _handleGeneratePdf() {
@@ -52,7 +53,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
       }
 
       ref.read(currentInvoiceProvider.notifier).setInvoice(invoice);
-      // Invalidate saved invoices provider to update Home tab instantly
+      // Invalidate saved invoices provider to update Home and Invoices list instantly
       ref.invalidate(savedInvoicesListProvider);
       context.push('/pdf-preview');
     } else {
@@ -76,6 +77,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     setState(() {
       _currentBottomNavIndex = 1; // Switch to Invoices tab
     });
+    _invoicesTabKey.currentState?.openCreateForm();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Selected ${customer.name} for new invoice'),
@@ -99,8 +101,12 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             // Tab 0: Clean Home Dashboard
             _buildHomeDashboardTab(companyInfo),
 
-            // Tab 1: Clean Invoices Form (No company info card, no history button)
-            _buildInvoicesTab(),
+            // Tab 1: Available Invoices List & Creation Form
+            _InvoicesTab(
+              key: _invoicesTabKey,
+              formKey: _formKey,
+              onGeneratePdf: _handleGeneratePdf,
+            ),
 
             // Tab 2: Parties / Customers
             _PartiesTab(onSelectPartyForInvoice: _selectPartyForInvoice),
@@ -408,7 +414,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                 icon: Icons.note_add_rounded,
                 bgColor: const Color(0xFFDCFCE7),
                 iconColor: const Color(0xFF15803D),
-                onTap: () => setState(() => _currentBottomNavIndex = 1),
+                onTap: () {
+                  setState(() => _currentBottomNavIndex = 1);
+                  _invoicesTabKey.currentState?.openCreateForm();
+                },
               ),
               _buildActionGridItem(
                 label: 'Parties & Customers',
@@ -422,7 +431,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                 icon: Icons.history_rounded,
                 bgColor: const Color(0xFFFEF9C3),
                 iconColor: const Color(0xFFA16207),
-                onTap: () => context.push('/recent-invoices'),
+                onTap: () => setState(() => _currentBottomNavIndex = 1),
               ),
               _buildActionGridItem(
                 label: 'Settings & Profile',
@@ -449,7 +458,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                 ),
               ),
               TextButton(
-                onPressed: () => context.push('/recent-invoices'),
+                onPressed: () => setState(() => _currentBottomNavIndex = 1),
                 child: const Text('See all', style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
               ),
             ],
@@ -488,7 +497,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                           backgroundColor: AppTheme.primaryColor,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        onPressed: () => setState(() => _currentBottomNavIndex = 1),
+                        onPressed: () {
+                          setState(() => _currentBottomNavIndex = 1);
+                          _invoicesTabKey.currentState?.openCreateForm();
+                        },
                         icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
                         label: const Text('Create Invoice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
@@ -510,119 +522,6 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
           const SizedBox(height: 20),
         ],
       ),
-    );
-  }
-
-  // TAB 1: CLEAN INVOICES TAB
-  Widget _buildInvoicesTab() {
-    return Column(
-      children: [
-        // Clean Top App Bar
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: Colors.white,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Create Invoice',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-              ),
-              IconButton(
-                onPressed: () {
-                  ref.read(invoiceNotifierProvider.notifier).resetForm();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Invoice form reset')),
-                  );
-                },
-                icon: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor),
-                tooltip: 'Reset form',
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FadeInSlide(
-                    child: Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppTheme.primaryColor, Color(0xFF059669)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 28),
-                          ),
-                          const SizedBox(width: 14),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'New Billing Invoice',
-                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'Fill in customer and service details to generate PDF',
-                                  style: TextStyle(color: Colors.white70, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const FadeInSlide(child: CustomerSection()),
-                  const SizedBox(height: 16),
-                  const FadeInSlide(child: ServiceItemsSection()),
-                  const SizedBox(height: 16),
-                  const FadeInSlide(child: PaymentSection()),
-                  const SizedBox(height: 16),
-                  const FadeInSlide(child: DocumentCustomizationSection()),
-                  const SizedBox(height: 24),
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final totalAmount = ref.watch(invoiceNotifierProvider.select((s) => s.totalAmount));
-                      return ElevatedButton(
-                        onPressed: _handleGeneratePdf,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        ),
-                        child: Text(
-                          'Generate PDF (₹${totalAmount.toStringAsFixed(2)})',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -771,6 +670,343 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// TAB 1: INVOICES TAB (List of Available Invoices + Form toggle)
+class _InvoicesTab extends ConsumerStatefulWidget {
+  final GlobalKey<FormState> formKey;
+  final VoidCallback onGeneratePdf;
+
+  const _InvoicesTab({
+    super.key,
+    required this.formKey,
+    required this.onGeneratePdf,
+  });
+
+  @override
+  ConsumerState<_InvoicesTab> createState() => _InvoicesTabState();
+}
+
+class _InvoicesTabState extends ConsumerState<_InvoicesTab> {
+  bool _showCreateForm = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void openCreateForm() {
+    setState(() {
+      _showCreateForm = true;
+    });
+  }
+
+  void closeCreateForm() {
+    setState(() {
+      _showCreateForm = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final invoicesAsync = ref.watch(savedInvoicesListProvider);
+
+    if (_showCreateForm) {
+      return Column(
+        children: [
+          // Top App Bar for Create Form
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            color: Colors.white,
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.textDark),
+                  onPressed: closeCreateForm,
+                  tooltip: 'Back to Invoices List',
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Create New Invoice',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () {
+                    ref.read(invoiceNotifierProvider.notifier).resetForm();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Form cleared')),
+                    );
+                  },
+                  icon: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor),
+                  tooltip: 'Reset form',
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Form(
+              key: widget.formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FadeInSlide(
+                      child: Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.primaryColor, Color(0xFF059669)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 28),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'New Billing Invoice',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Fill in customer and service details to generate PDF',
+                                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const FadeInSlide(child: CustomerSection()),
+                    const SizedBox(height: 16),
+                    const FadeInSlide(child: ServiceItemsSection()),
+                    const SizedBox(height: 16),
+                    const FadeInSlide(child: PaymentSection()),
+                    const SizedBox(height: 16),
+                    const FadeInSlide(child: DocumentCustomizationSection()),
+                    const SizedBox(height: 24),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final totalAmount = ref.watch(invoiceNotifierProvider.select((s) => s.totalAmount));
+                        return ElevatedButton(
+                          onPressed: () {
+                            widget.onGeneratePdf();
+                            setState(() {
+                              _showCreateForm = false;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                          child: Text(
+                            'Generate PDF (₹${totalAmount.toStringAsFixed(2)})',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Default View: List of Available Invoices
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Invoices', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+              ElevatedButton.icon(
+                onPressed: () {
+                  ref.read(invoiceNotifierProvider.notifier).resetForm();
+                  openCreateForm();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                label: const Text('+ Create Invoice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() => _searchQuery = v),
+            decoration: InputDecoration(
+              hintText: 'Search by invoice number or customer...',
+              prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.textMuted),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: invoicesAsync.when(
+              data: (invoices) {
+                final filtered = invoices.where((i) {
+                  final q = _searchQuery.toLowerCase();
+                  return i.invoiceNumber.toLowerCase().contains(q) ||
+                      i.customer.name.toLowerCase().contains(q) ||
+                      i.customer.phone.contains(q);
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.receipt_long_outlined, size: 60, color: Colors.grey.shade400),
+                        const SizedBox(height: 12),
+                        Text(
+                          _searchQuery.isEmpty ? 'No invoices available yet.' : 'No invoices matching "$_searchQuery"',
+                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 15),
+                        ),
+                        if (_searchQuery.isEmpty) ...[
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: () {
+                              ref.read(invoiceNotifierProvider.notifier).resetForm();
+                              openCreateForm();
+                            },
+                            icon: const Icon(Icons.add_rounded, color: Colors.white),
+                            label: const Text('Create First Invoice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ]
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (ctx, idx) {
+                    final invoice = filtered[idx];
+                    return _buildInvoiceCard(invoice);
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, _) => Center(child: Text('Error loading invoices: $err')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInvoiceCard(Invoice invoice) {
+    final statusBg = invoice.paymentStatus == PaymentStatus.paid
+        ? const Color(0xFFDCFCE7)
+        : (invoice.paymentStatus == PaymentStatus.partiallyPaid ? const Color(0xFFFEF9C3) : const Color(0xFFFEE2E2));
+    final statusColor = invoice.paymentStatus == PaymentStatus.paid
+        ? const Color(0xFF15803D)
+        : (invoice.paymentStatus == PaymentStatus.partiallyPaid ? const Color(0xFFA16207) : const Color(0xFFB91C1C));
+    final statusLabel = invoice.paymentStatus == PaymentStatus.paid
+        ? 'Paid'
+        : (invoice.paymentStatus == PaymentStatus.partiallyPaid ? 'Partial' : 'Unpaid');
+
+    final formattedDate = '${invoice.invoiceDate.day}/${invoice.invoiceDate.month}/${invoice.invoiceDate.year}';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppTheme.cardBorderColor, width: 1),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(14),
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.mintBackground,
+          radius: 22,
+          child: Text(
+            invoice.customer.name.isNotEmpty ? invoice.customer.name[0].toUpperCase() : 'I',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.primaryColor),
+          ),
+        ),
+        title: Text(
+          invoice.customer.name,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textDark),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 2),
+            Text('#${invoice.invoiceNumber} • $formattedDate', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+            Text('${invoice.items.length} items', style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
+          ],
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(12)),
+              child: Text(
+                statusLabel,
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '₹${invoice.totalAmount.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+            ),
+          ],
+        ),
+        onTap: () {
+          ref.read(invoiceNotifierProvider.notifier).loadInvoice(invoice);
+          ref.read(currentInvoiceProvider.notifier).setInvoice(invoice);
+          context.push('/pdf-preview');
+        },
       ),
     );
   }
@@ -1402,37 +1638,32 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
             const SizedBox(height: 20),
           ],
 
-          // Account Options & Logout
+          // Account Options & Logout Card
           Card(
+            elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             child: Column(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.history_rounded, color: AppTheme.primaryColor),
-                  title: const Text('Recent Invoices & Bills'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.push('/recent-invoices'),
-                ),
-                if (!isLoggedIn) const Divider(height: 1),
                 if (!isLoggedIn)
                   ListTile(
                     leading: const Icon(Icons.account_circle_outlined, color: AppTheme.primaryColor),
-                    title: const Text('Sign in with Google'),
+                    title: const Text('Sign in with Google', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
+                    subtitle: const Text('Sign in to enable Cloud Backup & Sync'),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => context.push('/login'),
                   ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-                  title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Clear secure session & log out'),
-                  onTap: () async {
-                    await ref.read(authRepositoryProvider).signOut();
-                    if (mounted) {
-                      context.go('/login');
-                    }
-                  },
-                ),
+                if (isLoggedIn)
+                  ListTile(
+                    leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                    title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    subtitle: const Text('Clear local secure session & log out'),
+                    onTap: () async {
+                      await ref.read(authRepositoryProvider).signOut();
+                      if (mounted) {
+                        context.go('/login');
+                      }
+                    },
+                  ),
               ],
             ),
           ),
