@@ -160,6 +160,8 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   Widget _buildDrawer(BuildContext context, dynamic companyInfo) {
     final prefs = ref.watch(sharedPreferencesProvider);
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final authUser = ref.watch(authStateProvider).value;
+    final photoUrl = authUser?.photoURL;
 
     return Drawer(
       backgroundColor: Colors.white,
@@ -169,16 +171,21 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             decoration: const BoxDecoration(
               color: AppTheme.primaryColor,
             ),
-            currentAccountPicture: const CircleAvatar(
+            currentAccountPicture: CircleAvatar(
               backgroundColor: Colors.white,
-              child: Icon(Icons.send_rounded, color: AppTheme.primaryColor, size: 32),
+              backgroundImage: (photoUrl != null && photoUrl.trim().isNotEmpty)
+                  ? NetworkImage(photoUrl)
+                  : null,
+              child: (photoUrl == null || photoUrl.trim().isEmpty)
+                  ? const Icon(Icons.person_rounded, color: AppTheme.primaryColor, size: 32)
+                  : null,
             ),
             accountName: Text(
-              companyInfo.name,
+              companyInfo.name.isNotEmpty ? companyInfo.name : (authUser?.displayName ?? 'User'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
             ),
             accountEmail: Text(
-              isLoggedIn ? (companyInfo.email.isNotEmpty ? companyInfo.email : 'Signed In User') : 'Guest Account',
+              isLoggedIn ? (companyInfo.email.isNotEmpty ? companyInfo.email : (authUser?.email ?? 'Signed In User')) : 'Guest Account',
               style: const TextStyle(color: Colors.white70),
             ),
           ),
@@ -265,6 +272,8 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   // TAB 0: CLEAN HOME DASHBOARD
   Widget _buildHomeDashboardTab(dynamic companyInfo) {
     final invoicesAsync = ref.watch(savedInvoicesListProvider);
+    final authUser = ref.watch(authStateProvider).value;
+    final photoUrl = authUser?.photoURL;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -289,12 +298,21 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   builder: (ctx) => GestureDetector(
                     onTap: () => Scaffold.of(ctx).openDrawer(),
                     child: Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: const Icon(Icons.menu_rounded, color: AppTheme.primaryColor, size: 22),
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white,
+                        backgroundImage: (photoUrl != null && photoUrl.trim().isNotEmpty)
+                            ? NetworkImage(photoUrl)
+                            : null,
+                        child: (photoUrl == null || photoUrl.trim().isEmpty)
+                            ? const Icon(Icons.menu_rounded, color: AppTheme.primaryColor, size: 22)
+                            : null,
+                      ),
                     ),
                   ),
                 ),
@@ -1136,6 +1154,8 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     final company = ref.watch(companyInfoStateProvider);
     final prefs = ref.watch(sharedPreferencesProvider);
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    final authUser = ref.watch(authStateProvider).value;
+    final photoUrl = authUser?.photoURL;
 
     // Sync controllers if state changed externally
     if (company.name != _nameController.text && !FocusScope.of(context).hasFocus) {
@@ -1169,7 +1189,12 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
                   CircleAvatar(
                     radius: 28,
                     backgroundColor: AppTheme.mintBackground,
-                    child: const Icon(Icons.business_rounded, color: AppTheme.primaryColor, size: 28),
+                    backgroundImage: (photoUrl != null && photoUrl.trim().isNotEmpty)
+                        ? NetworkImage(photoUrl)
+                        : null,
+                    child: (photoUrl == null || photoUrl.trim().isEmpty)
+                        ? const Icon(Icons.business_rounded, color: AppTheme.primaryColor, size: 28)
+                        : null,
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -1322,59 +1347,60 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
 
           const SizedBox(height: 20),
 
-          // CLOUD SYNC SECTION
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            child: Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.cloud_sync_rounded, color: AppTheme.primaryColor),
-                      SizedBox(width: 8),
-                      Text(
-                        'Cloud Sync (Firestore)',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.textDark),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Sync company details, parties, and invoices to Firebase Cloud Firestore',
-                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: _isSyncing ? null : _handleCloudSync,
-                      icon: _isSyncing
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor)),
-                            )
-                          : const Icon(Icons.cloud_upload_rounded, color: AppTheme.primaryColor),
-                      label: Text(
-                        _isSyncing ? 'Syncing to Firestore...' : 'Sync with Cloud',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+          // CLOUD SYNC SECTION (Only for Logged-In Users)
+          if (isLoggedIn) ...[
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.all(18.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.cloud_sync_rounded, color: AppTheme.primaryColor),
+                        SizedBox(width: 8),
+                        Text(
+                          'Cloud Sync (Firestore)',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Sync company details, parties, and invoices to Firebase Cloud Firestore',
+                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: _isSyncing ? null : _handleCloudSync,
+                        icon: _isSyncing
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor)),
+                              )
+                            : const Icon(Icons.cloud_upload_rounded, color: AppTheme.primaryColor),
+                        label: Text(
+                          _isSyncing ? 'Syncing to Firestore...' : 'Sync with Cloud',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
+          ],
 
           // Account Options & Logout
           Card(

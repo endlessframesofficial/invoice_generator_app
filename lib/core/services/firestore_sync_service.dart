@@ -73,12 +73,16 @@ class FirestoreSyncService {
     try {
       final userDoc = _firestore.collection('users').doc(userId);
 
-      // 1. Write/Merge Main User Document with Premium Status Flag
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final photoUrl = currentUser?.photoURL ?? '';
+
+      // 1. Write/Merge Main User Document with Premium Status Flag & User Photo URL
       await userDoc.set({
         'uid': userId,
         'name': companyInfo.name,
         'email': companyInfo.email,
         'phone': companyInfo.phone,
+        'photoUrl': photoUrl,
         'isPremium': false,
         'plan': 'free',
         'updatedAt': FieldValue.serverTimestamp(),
