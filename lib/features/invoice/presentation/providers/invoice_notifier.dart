@@ -114,6 +114,21 @@ class InvoiceNotifier extends _$InvoiceNotifier {
     );
   }
 
+  void updateCustomerInfo({
+    required String name,
+    required String phone,
+    String? email,
+    String? address,
+  }) {
+    state = state.copyWith(
+      customerName: name,
+      customerPhone: phone,
+      customerEmail: email ?? state.customerEmail,
+      customerAddress: address ?? state.customerAddress,
+      errorMessage: null,
+    );
+  }
+
   void addServiceItem() {
     final updatedList = List<ServiceItem>.from(state.items)..add(_createEmptyItem());
     state = state.copyWith(

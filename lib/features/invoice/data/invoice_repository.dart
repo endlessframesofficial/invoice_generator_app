@@ -12,6 +12,11 @@ final invoiceRepositoryProvider = Provider<InvoiceRepository>((ref) {
   return InvoiceRepository(prefs);
 });
 
+final savedInvoicesListProvider = FutureProvider<List<Invoice>>((ref) async {
+  final repo = ref.watch(invoiceRepositoryProvider);
+  return await repo.getInvoices();
+});
+
 class InvoiceRepository {
   final SharedPreferences _prefs;
   static const String _storageKey = 'saved_invoices';
