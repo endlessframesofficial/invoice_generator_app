@@ -294,6 +294,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             onTap: () async {
               Navigator.pop(context);
               await ref.read(authRepositoryProvider).signOut();
+              ref.invalidate(companyInfoStateProvider);
+              ref.invalidate(customerListProvider);
+              ref.invalidate(savedInvoicesListProvider);
+              ref.read(invoiceNotifierProvider.notifier).resetForm();
               if (mounted) {
                 context.go('/login');
               }
@@ -1866,6 +1870,10 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
                     subtitle: const Text('Clear local secure session & log out'),
                     onTap: () async {
                       await ref.read(authRepositoryProvider).signOut();
+                      ref.invalidate(companyInfoStateProvider);
+                      ref.invalidate(customerListProvider);
+                      ref.invalidate(savedInvoicesListProvider);
+                      ref.read(invoiceNotifierProvider.notifier).resetForm();
                       if (mounted) {
                         context.go('/login');
                       }

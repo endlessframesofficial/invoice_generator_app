@@ -136,6 +136,7 @@ class AuthRepository {
       await _prefs.setBool('is_guest', false);
       await _prefs.remove('company_info_data');
       await _prefs.remove('saved_invoices');
+      await _prefs.remove('saved_parties_list');
     }
 
     try {
