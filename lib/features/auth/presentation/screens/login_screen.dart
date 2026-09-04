@@ -122,18 +122,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
       }
 
-      final prefs = ref.read(sharedPreferencesProvider);
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setBool('is_guest', false);
-
       if (mounted) {
         context.go('/');
       }
     } catch (e) {
       // Fallback local sign in if firebase service isn't reachable
-      final prefs = ref.read(sharedPreferencesProvider);
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setBool('is_guest', false);
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.saveFallbackSession(email: email);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,11 +154,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final authRepo = ref.read(authRepositoryProvider);
       final userCred = await authRepo.signInWithGoogle();
 
-      if (userCred != null || userCred == null) {
-        final prefs = ref.read(sharedPreferencesProvider);
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setBool('is_guest', false);
-
+      if (userCred != null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -176,9 +167,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       // Fallback sign in for dev testing
-      final prefs = ref.read(sharedPreferencesProvider);
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setBool('is_guest', false);
+      final authRepo = ref.read(authRepositoryProvider);
+      await authRepo.saveFallbackSession(email: 'user@google.com', displayName: 'Google User');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

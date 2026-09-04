@@ -127,6 +127,9 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
 
   // Drawer
   Widget _buildDrawer(BuildContext context, dynamic companyInfo) {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+
     return Drawer(
       backgroundColor: Colors.white,
       child: Column(
@@ -143,7 +146,10 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
               companyInfo.name,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
             ),
-            accountEmail: Text(companyInfo.email, style: const TextStyle(color: Colors.white70)),
+            accountEmail: Text(
+              isLoggedIn ? (companyInfo.email.isNotEmpty ? companyInfo.email : 'Signed In User') : 'Guest Account',
+              style: const TextStyle(color: Colors.white70),
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.home_rounded, color: AppTheme.primaryColor),
@@ -169,31 +175,21 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
               context.push('/recent-invoices');
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.explore_outlined),
-            title: const Text('App Tour & Features'),
-            onTap: () {
-              Navigator.pop(context);
-              context.push('/onboarding');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: const Text('Account / Sign In'),
-            onTap: () {
-              Navigator.pop(context);
-              context.push('/login');
-            },
-          ),
+          if (!isLoggedIn)
+            ListTile(
+              leading: const Icon(Icons.account_circle_outlined, color: AppTheme.primaryColor),
+              title: const Text('Sign In'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/login');
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
             title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
             onTap: () async {
               Navigator.pop(context);
               await ref.read(authRepositoryProvider).signOut();
-              final prefs = ref.read(sharedPreferencesProvider);
-              await prefs.setBool('is_logged_in', false);
-              await prefs.setBool('is_guest', false);
               if (mounted) {
                 context.go('/login');
               }
@@ -758,6 +754,9 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
 
   // TAB 3: MENU / PROFILE
   Widget _buildMenuTab(dynamic companyInfo) {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -769,17 +768,64 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
           ),
           const SizedBox(height: 12),
           Text(companyInfo.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-          Text(companyInfo.email, style: const TextStyle(fontSize: 14, color: AppTheme.textMuted)),
+          Text(
+            isLoggedIn ? (companyInfo.email.isNotEmpty ? companyInfo.email : 'Signed In User') : 'Guest Session',
+            style: const TextStyle(fontSize: 14, color: AppTheme.textMuted),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isLoggedIn ? AppTheme.mintBackground : Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isLoggedIn ? Icons.check_circle_rounded : Icons.person_outline_rounded,
+                  size: 16,
+                  color: isLoggedIn ? AppTheme.primaryColor : Colors.orange.shade800,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isLoggedIn ? 'Signed In' : 'Guest Mode',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isLoggedIn ? AppTheme.primaryColor : Colors.orange.shade800,
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
           ListTile(
-            leading: const Icon(Icons.explore_outlined, color: AppTheme.primaryColor),
-            title: const Text('App Tour & Features'),
-            onTap: () => context.push('/onboarding'),
+            leading: const Icon(Icons.history_rounded, color: AppTheme.primaryColor),
+            title: const Text('Recent Invoices'),
+            subtitle: const Text('View and print previous invoices'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => context.push('/recent-invoices'),
           ),
+          const Divider(),
+          if (!isLoggedIn)
+            ListTile(
+              leading: const Icon(Icons.account_circle_outlined, color: AppTheme.primaryColor),
+              title: const Text('Sign in with Google'),
+              subtitle: const Text('Sync data across devices'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => context.push('/login'),
+            ),
           ListTile(
-            leading: const Icon(Icons.account_circle_outlined, color: AppTheme.primaryColor),
-            title: const Text('Sign in with Google'),
-            onTap: () => context.push('/login'),
+            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+            title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+            subtitle: const Text('Clear secure session & log out'),
+            onTap: () async {
+              await ref.read(authRepositoryProvider).signOut();
+              if (mounted) {
+                context.go('/login');
+              }
+            },
           ),
         ],
       ),
