@@ -24,22 +24,7 @@ class CustomerListNotifier extends StateNotifier<List<Customer>> {
             .map((e) => Customer.fromJson(jsonDecode(e) as Map<String, dynamic>))
             .toList();
       } else {
-        // Sample initial parties for smooth experience
-        state = const [
-          Customer(
-            name: 'ABC Enterprises',
-            phone: '+91 98765 43210',
-            email: 'contact@abcent.com',
-            address: 'MG Road, Bangalore, Karnataka',
-          ),
-          Customer(
-            name: 'Rahul Sharma',
-            phone: '+91 91234 56789',
-            email: 'rahul.s@gmail.com',
-            address: 'Sector 18, Noida, Uttar Pradesh',
-          ),
-        ];
-        _saveToPrefs(state);
+        state = [];
       }
     } catch (_) {
       state = [];

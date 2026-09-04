@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../customer/domain/customer.dart';
 import '../../data/invoice_repository.dart';
@@ -12,50 +11,7 @@ part 'invoice_notifier.g.dart';
 class InvoiceNotifier extends _$InvoiceNotifier {
   @override
   InvoiceFormState build() {
-    if (kDebugMode) {
-      return const InvoiceFormState(
-        customerName: "Jeramiah's Home & Bertoni Palliative Care Centre",
-        customerPhone: "9562654407",
-        customerEmail: "info@bertonicentre.org",
-        customerAddress: "Julieta Memorial Building, Panampilly Nagar, Ernakulam",
-        paymentStatus: PaymentStatus.partiallyPaid,
-        amountPaid: 3500.0,
-        items: [
-          ServiceItem(
-            id: 'mock-1',
-            name: 'Ac water service',
-            quantity: 1,
-            unitPrice: 1200.0,
-          ),
-          ServiceItem(
-            id: 'mock-2',
-            name: 'Gas top up',
-            quantity: 1,
-            unitPrice: 600.0,
-          ),
-          ServiceItem(
-            id: 'mock-3',
-            name: 'Ac capacitor replacement',
-            quantity: 2,
-            unitPrice: 850.0,
-          ),
-          ServiceItem(
-            id: 'mock-4',
-            name: 'Copper pipe installation',
-            quantity: 4,
-            unitPrice: 350.0,
-          ),
-          ServiceItem(
-            id: 'mock-5',
-            name: 'Service visit charge',
-            quantity: 1,
-            unitPrice: 350.0,
-          ),
-        ],
-      );
-    }
-
-    // Start with one empty item by default for a smoother user experience
+    // Clean initial form state: empty customer fields and 1 empty item row
     return InvoiceFormState(
       items: [
         _createEmptyItem(),

@@ -1,6 +1,6 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../main.dart';
 import '../../domain/company_info.dart';
 
@@ -19,14 +19,26 @@ class CompanyInfoState extends _$CompanyInfoState {
         final Map<String, dynamic> json = jsonDecode(jsonStr);
         return CompanyInfo.fromJson(json);
       } catch (_) {
-        // Fallback to default constants on parsing error
+        // Fallback
       }
     }
+
+    // Default to actual logged in user's profile details if available
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      return CompanyInfo(
+        name: user.displayName ?? '',
+        email: user.email ?? '',
+        phone: user.phoneNumber ?? '',
+        address: '',
+      );
+    }
+
     return const CompanyInfo(
-      name: AppConstants.companyName,
-      address: AppConstants.companyAddress,
-      phone: AppConstants.companyPhone,
-      email: AppConstants.companyEmail,
+      name: '',
+      address: '',
+      phone: '',
+      email: '',
     );
   }
 

@@ -2,8 +2,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/firestore_sync_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../main.dart';
+import '../../../company/presentation/providers/company_provider.dart';
+import '../../../customer/presentation/providers/customer_provider.dart';
+import '../../../invoice/data/invoice_repository.dart';
 import '../providers/auth_provider.dart';
 
 class GoogleLogoWidget extends StatelessWidget {
@@ -122,6 +126,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         }
       }
 
+      final user = authRepo.currentUser;
+      if (user != null) {
+        final companyInfo = ref.read(companyInfoStateProvider);
+        final parties = ref.read(customerListProvider);
+        final localInvoices = await ref.read(invoiceRepositoryProvider).getInvoices();
+        try {
+          await ref.read(firestoreSyncServiceProvider).handleGuestToLoginMigration(
+                user: user,
+                companyInfo: companyInfo,
+                parties: parties,
+                localInvoices: localInvoices,
+              );
+        } catch (_) {}
+      }
+
       if (mounted) {
         context.go('/');
       }
@@ -155,6 +174,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       final userCred = await authRepo.signInWithGoogle();
 
       if (userCred != null) {
+        final user = authRepo.currentUser;
+        if (user != null) {
+          final companyInfo = ref.read(companyInfoStateProvider);
+          final parties = ref.read(customerListProvider);
+          final localInvoices = await ref.read(invoiceRepositoryProvider).getInvoices();
+          try {
+            await ref.read(firestoreSyncServiceProvider).handleGuestToLoginMigration(
+                  user: user,
+                  companyInfo: companyInfo,
+                  parties: parties,
+                  localInvoices: localInvoices,
+                );
+          } catch (_) {}
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

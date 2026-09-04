@@ -26,47 +26,44 @@ class FirestoreSyncService {
     final userDocRef = _firestore.collection('users').doc(user.uid);
     final userSnapshot = await userDocRef.get();
 
-    // 1. Create users/{uid} document if not existing
-    if (!userSnapshot.exists) {
-      await userDocRef.set({
-        'name': user.displayName ?? companyInfo.name,
-        'email': user.email ?? companyInfo.email,
-        'phone': user.phoneNumber ?? companyInfo.phone,
-        'photoUrl': user.photoURL ?? '',
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+    // 1. Create or update users/{uid} document with premium & profile flags
+    await userDocRef.set({
+      'uid': user.uid,
+      'name': user.displayName ?? companyInfo.name,
+      'email': user.email ?? companyInfo.email,
+      'phone': user.phoneNumber ?? companyInfo.phone,
+      'photoUrl': user.photoURL ?? '',
+      'isPremium': false,
+      'plan': 'free',
+      'createdAt': userSnapshot.exists ? (userSnapshot.data()?['createdAt'] ?? FieldValue.serverTimestamp()) : FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
-      // Initialize default subscription entitlement under users/{uid}/subscription/current
-      await userDocRef.collection('subscription').doc('current').set({
+    // 2. Initialize subscription entitlement at users/{uid}/subscription/current
+    final subDocRef = userDocRef.collection('subscription').doc('current');
+    final subSnapshot = await subDocRef.get();
+    if (!subSnapshot.exists) {
+      await subDocRef.set({
         'plan': 'free',
         'status': 'active',
+        'isPremium': false,
         'expiresAt': null,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    } else {
-      // Update basic details
-      await userDocRef.update({
-        'name': user.displayName ?? companyInfo.name,
-        'email': user.email ?? companyInfo.email,
-        'phone': user.phoneNumber ?? companyInfo.phone,
-        'photoUrl': user.photoURL ?? '',
+        'purchaseToken': null,
+        'productId': null,
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
 
-    // 2. Migrate existing local guest invoices to Firestore
-    if (localInvoices.isNotEmpty) {
-      await syncAllToCloud(
-        userId: user.uid,
-        companyInfo: companyInfo,
-        parties: parties,
-        invoices: localInvoices,
-      );
-    }
+    // 3. Migrate existing local invoices and data to Firestore
+    await syncAllToCloud(
+      userId: user.uid,
+      companyInfo: companyInfo,
+      parties: parties,
+      invoices: localInvoices,
+    );
   }
 
-  /// Syncs local data (Company Info, Parties, Invoices) to Firestore under users/{userId}
+  /// Syncs local data (User Profile, Company Info, Parties, Invoices) to Firestore under users/{userId}
   Future<void> syncAllToCloud({
     required String userId,
     required CompanyInfo companyInfo,
@@ -76,13 +73,33 @@ class FirestoreSyncService {
     try {
       final userDoc = _firestore.collection('users').doc(userId);
 
-      // 1. Sync Company Details
+      // 1. Write/Merge Main User Document with Premium Status Flag
+      await userDoc.set({
+        'uid': userId,
+        'name': companyInfo.name,
+        'email': companyInfo.email,
+        'phone': companyInfo.phone,
+        'isPremium': false,
+        'plan': 'free',
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 2. Write/Merge Subscription Subcollection
+      await userDoc.collection('subscription').doc('current').set({
+        'plan': 'free',
+        'status': 'active',
+        'isPremium': false,
+        'expiresAt': null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // 3. Sync Company Details
       await userDoc.collection('company').doc('info').set({
         ...companyInfo.toJson(),
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // 2. Sync Parties / Customers
+      // 4. Sync Parties / Customers
       final batch = _firestore.batch();
       for (final party in parties) {
         final docId = party.phone.replaceAll(RegExp(r'\s+'), '');
@@ -91,7 +108,7 @@ class FirestoreSyncService {
         batch.set(partyDoc, party.toJson(), SetOptions(merge: true));
       }
 
-      // 3. Sync Invoices
+      // 5. Sync Invoices
       for (final invoice in invoices) {
         final invoiceDoc = userDoc.collection('invoices').doc(invoice.invoiceNumber);
         batch.set(
