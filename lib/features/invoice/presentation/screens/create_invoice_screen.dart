@@ -28,9 +28,28 @@ class CreateInvoiceScreen extends ConsumerStatefulWidget {
 class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   final _formKey = GlobalKey<FormState>();
   final _invoicesTabKey = GlobalKey<_InvoicesTabState>();
+  final _partiesTabKey = GlobalKey<_PartiesTabState>();
   int _currentBottomNavIndex = 0;
 
-  void _handleGeneratePdf() {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-restore & sync data from Cloud Firestore on app startup
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final user = ref.read(authRepositoryProvider).currentUser;
+      if (user != null) {
+        try {
+          await ref.read(firestoreSyncServiceProvider).pullDataFromCloud(
+                userId: user.uid,
+                ref: ref,
+              );
+          ref.invalidate(savedInvoicesListProvider);
+        } catch (_) {}
+      }
+    });
+  }
+
+  void _handleGeneratePdf() async {
     final notifier = ref.read(invoiceNotifierProvider.notifier);
 
     if (!_formKey.currentState!.validate()) {
@@ -49,13 +68,31 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
       // Automatically save party if not already present in database
       final customer = invoice.customer;
       if (customer.name.trim().isNotEmpty && customer.phone.trim().isNotEmpty) {
-        ref.read(customerListProvider.notifier).addCustomer(customer);
+        await ref.read(customerListProvider.notifier).addCustomer(customer);
+      }
+
+      // Auto-sync newly created invoice & parties to Cloud Firestore in background
+      final user = ref.read(authRepositoryProvider).currentUser;
+      if (user != null) {
+        final companyInfo = ref.read(companyInfoStateProvider);
+        final parties = ref.read(customerListProvider);
+        final allInvoices = await ref.read(invoiceRepositoryProvider).getInvoices();
+        try {
+          await ref.read(firestoreSyncServiceProvider).syncAllToCloud(
+                userId: user.uid,
+                companyInfo: companyInfo,
+                parties: parties,
+                invoices: allInvoices,
+              );
+        } catch (_) {}
       }
 
       ref.read(currentInvoiceProvider.notifier).setInvoice(invoice);
       // Invalidate saved invoices provider to update Home and Invoices list instantly
       ref.invalidate(savedInvoicesListProvider);
-      context.push('/pdf-preview');
+      if (mounted) {
+        context.push('/pdf-preview');
+      }
     } else {
       final errorMsg = ref.read(invoiceNotifierProvider).errorMessage ?? 'Validation failed';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -109,13 +146,27 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             ),
 
             // Tab 2: Parties / Customers
-            _PartiesTab(onSelectPartyForInvoice: _selectPartyForInvoice),
+            _PartiesTab(
+              key: _partiesTabKey,
+              onSelectPartyForInvoice: _selectPartyForInvoice,
+            ),
 
             // Tab 3: Settings & Company Details Update
             const _SettingsTab(),
           ],
         ),
       ),
+      floatingActionButton: _currentBottomNavIndex == 2
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                _partiesTabKey.currentState?.showAddPartyDialog();
+              },
+              backgroundColor: AppTheme.primaryColor,
+              elevation: 4,
+              icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+              label: const Text('Add Party', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            )
+          : null,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -1035,7 +1086,10 @@ class _InvoicesTabState extends ConsumerState<_InvoicesTab> {
 class _PartiesTab extends ConsumerStatefulWidget {
   final ValueChanged<Customer> onSelectPartyForInvoice;
 
-  const _PartiesTab({required this.onSelectPartyForInvoice});
+  const _PartiesTab({
+    super.key,
+    required this.onSelectPartyForInvoice,
+  });
 
   @override
   ConsumerState<_PartiesTab> createState() => _PartiesTabState();
@@ -1051,7 +1105,7 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
     super.dispose();
   }
 
-  void _showAddPartyDialog() {
+  void showAddPartyDialog() {
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
@@ -1193,26 +1247,12 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Parties & Customers', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
-                  Text('${filteredParties.length} saved contacts', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
-                ],
-              ),
-              ElevatedButton.icon(
-                onPressed: _showAddPartyDialog,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                ),
-                icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                label: const Text('+ Add Party', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
+              const Text('Parties & Customers', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+              const SizedBox(height: 2),
+              Text('${filteredParties.length} saved contacts', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
             ],
           ),
           const SizedBox(height: 16),
@@ -1254,7 +1294,7 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
                               backgroundColor: AppTheme.primaryColor,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
-                            onPressed: _showAddPartyDialog,
+                            onPressed: showAddPartyDialog,
                             icon: const Icon(Icons.add_rounded, color: Colors.white),
                             label: const Text('Add First Party', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           ),
@@ -1427,6 +1467,21 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     );
 
     await ref.read(companyInfoStateProvider.notifier).updateCompanyInfo(updatedCompany);
+
+    // Auto-sync updated company details to Cloud Firestore in background if logged in
+    final user = ref.read(authRepositoryProvider).currentUser;
+    if (user != null) {
+      final parties = ref.read(customerListProvider);
+      final invoices = await ref.read(invoiceRepositoryProvider).getInvoices();
+      try {
+        await ref.read(firestoreSyncServiceProvider).syncAllToCloud(
+              userId: user.uid,
+              companyInfo: updatedCompany,
+              parties: parties,
+              invoices: invoices,
+            );
+      } catch (_) {}
+    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
