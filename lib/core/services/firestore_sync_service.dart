@@ -2,8 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/company/domain/company_info.dart';
+import '../../features/company/presentation/providers/company_provider.dart';
 import '../../features/customer/domain/customer.dart';
+import '../../features/customer/presentation/providers/customer_provider.dart';
+import '../../features/invoice/data/invoice_repository.dart';
 import '../../features/invoice/domain/invoice.dart';
+import '../../features/invoice/domain/service_item.dart';
 
 final firestoreSyncServiceProvider = Provider<FirestoreSyncService>((ref) {
   return FirestoreSyncService();
@@ -15,18 +19,18 @@ class FirestoreSyncService {
   FirestoreSyncService({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Called upon user login: Ensures users/{uid} and users/{uid}/subscription/current exist,
-  /// and migrates any existing local guest invoices to Firestore.
+  /// Called upon user login: Migration + Bidirectional Sync
   Future<void> handleGuestToLoginMigration({
     required User user,
     required CompanyInfo companyInfo,
     required List<Customer> parties,
     required List<Invoice> localInvoices,
+    required WidgetRef ref,
   }) async {
     final userDocRef = _firestore.collection('users').doc(user.uid);
     final userSnapshot = await userDocRef.get();
 
-    // 1. Create or update users/{uid} document with premium & profile flags
+    // 1. Create or update users/{uid} document
     await userDocRef.set({
       'uid': user.uid,
       'name': user.displayName ?? companyInfo.name,
@@ -39,7 +43,7 @@ class FirestoreSyncService {
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    // 2. Initialize subscription entitlement at users/{uid}/subscription/current
+    // 2. Initialize subscription entitlement if missing
     final subDocRef = userDocRef.collection('subscription').doc('current');
     final subSnapshot = await subDocRef.get();
     if (!subSnapshot.exists) {
@@ -54,13 +58,90 @@ class FirestoreSyncService {
       });
     }
 
-    // 3. Migrate existing local invoices and data to Firestore
+    // 3. First pull any existing data from Cloud Firestore into local database
+    await pullDataFromCloud(userId: user.uid, ref: ref);
+
+    // 4. Then push current local invoices/parties/company to Cloud
     await syncAllToCloud(
       userId: user.uid,
       companyInfo: companyInfo,
       parties: parties,
       invoices: localInvoices,
     );
+  }
+
+  /// Pulls data from Cloud Firestore (Company, Parties, Invoices) and merges into local storage
+  Future<void> pullDataFromCloud({
+    required String userId,
+    required WidgetRef ref,
+  }) async {
+    try {
+      final userDoc = _firestore.collection('users').doc(userId);
+
+      // 1. Pull Company Details from Cloud
+      final companySnap = await userDoc.collection('company').doc('info').get();
+      if (companySnap.exists && companySnap.data() != null) {
+        try {
+          final cloudCompany = CompanyInfo.fromJson(companySnap.data()!);
+          await ref.read(companyInfoStateProvider.notifier).updateCompanyInfo(cloudCompany);
+        } catch (_) {}
+      }
+
+      // 2. Pull Parties from Cloud
+      final partiesSnap = await userDoc.collection('parties').get();
+      for (final doc in partiesSnap.docs) {
+        try {
+          final party = Customer.fromJson(doc.data());
+          await ref.read(customerListProvider.notifier).addCustomer(party);
+        } catch (_) {}
+      }
+
+      // 3. Pull Invoices from Cloud
+      final invoicesSnap = await userDoc.collection('invoices').get();
+      final invoiceRepo = ref.read(invoiceRepositoryProvider);
+
+      for (final doc in invoicesSnap.docs) {
+        try {
+          final data = doc.data();
+          final customerData = data['customer'] is Map<String, dynamic>
+              ? data['customer'] as Map<String, dynamic>
+              : {
+                  'name': data['customerName'] ?? '',
+                  'phone': data['customerPhone'] ?? '',
+                  'email': '',
+                  'address': '',
+                };
+
+          final itemsData = (data['items'] as List<dynamic>? ?? [])
+              .map((e) => ServiceItem.fromJson(e as Map<String, dynamic>))
+              .toList();
+
+          final dateStr = data['invoiceDate'] ?? data['createdAt'];
+          DateTime invoiceDate = DateTime.now();
+          if (dateStr != null) {
+            invoiceDate = DateTime.tryParse(dateStr.toString()) ?? DateTime.now();
+          }
+
+          final invoice = Invoice(
+            invoiceNumber: data['invoiceNumber'] as String? ?? doc.id,
+            invoiceDate: invoiceDate,
+            customer: Customer.fromJson(customerData),
+            items: itemsData,
+            paymentStatus: PaymentStatus.values.firstWhere(
+              (e) => e.name == data['paymentStatus'],
+              orElse: () => PaymentStatus.unpaid,
+            ),
+            amountPaid: (data['amountPaid'] as num? ?? 0.0).toDouble(),
+            showLogo: data['showLogo'] as bool? ?? true,
+            showSignature: data['showSignature'] as bool? ?? true,
+          );
+
+          await invoiceRepo.saveInvoice(invoice);
+        } catch (_) {}
+      }
+
+      ref.invalidate(savedInvoicesListProvider);
+    } catch (_) {}
   }
 
   /// Syncs local data (User Profile, Company Info, Parties, Invoices) to Firestore under users/{userId}
@@ -76,7 +157,7 @@ class FirestoreSyncService {
       final currentUser = FirebaseAuth.instance.currentUser;
       final photoUrl = currentUser?.photoURL ?? '';
 
-      // 1. Write/Merge Main User Document with Premium Status Flag & User Photo URL
+      // 1. Write/Merge Main User Document
       await userDoc.set({
         'uid': userId,
         'name': companyInfo.name,
@@ -119,6 +200,8 @@ class FirestoreSyncService {
           invoiceDoc,
           {
             'invoiceNumber': invoice.invoiceNumber,
+            'invoiceDate': invoice.invoiceDate.toIso8601String(),
+            'customer': invoice.customer.toJson(),
             'customerName': invoice.customer.name,
             'customerPhone': invoice.customer.phone,
             'items': invoice.items.map((item) => item.toJson()).toList(),
@@ -128,6 +211,8 @@ class FirestoreSyncService {
             'notes': '',
             'paymentStatus': invoice.paymentStatus.name,
             'amountPaid': invoice.amountPaid,
+            'showLogo': invoice.showLogo,
+            'showSignature': invoice.showSignature,
             'createdAt': invoice.invoiceDate.toIso8601String(),
             'updatedAt': FieldValue.serverTimestamp(),
           },

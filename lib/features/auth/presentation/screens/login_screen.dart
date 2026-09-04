@@ -137,6 +137,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 companyInfo: companyInfo,
                 parties: parties,
                 localInvoices: localInvoices,
+                ref: ref,
               );
         } catch (_) {}
       }
@@ -185,6 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   companyInfo: companyInfo,
                   parties: parties,
                   localInvoices: localInvoices,
+                  ref: ref,
                 );
           } catch (_) {}
         }

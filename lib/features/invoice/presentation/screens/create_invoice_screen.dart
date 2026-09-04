@@ -286,7 +286,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Container
+          // Header Container with Soft Mesh Gradient
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -308,6 +308,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.cardBorderColor, width: 1),
                       ),
                       child: CircleAvatar(
                         radius: 20,
@@ -323,31 +324,48 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Welcome back,',
-                      style: TextStyle(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      companyInfo.name.isNotEmpty ? companyInfo.name : 'BillingBook User',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textDark,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Welcome back,',
+                        style: TextStyle(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w500),
                       ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
+                      Text(
+                        companyInfo.name.isNotEmpty ? companyInfo.name : (authUser?.displayName ?? 'BillingBook User'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.notifications_none_rounded, color: AppTheme.textDark, size: 22),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    final user = ref.read(authRepositoryProvider).currentUser;
+                    if (user != null) {
+                      await ref.read(firestoreSyncServiceProvider).pullDataFromCloud(
+                            userId: user.uid,
+                            ref: ref,
+                          );
+                    } else {
+                      ref.invalidate(savedInvoicesListProvider);
+                    }
+                  },
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor, size: 20),
+                  ),
+                  tooltip: 'Refresh & Sync Dashboard',
                 ),
               ],
             ),
@@ -373,7 +391,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   children: [
                     _buildMetricColumn('Total Invoices', '$totalCount', 'Generated'),
                     _buildMetricDivider(),
-                    _buildMetricColumn('Paid Invoices', '$paidCount', 'Fully Settled'),
+                    _buildMetricColumn('Paid Invoices', '$paidCount', 'Settled'),
                     _buildMetricDivider(),
                     _buildMetricColumn('Total Billed', '₹${totalRevenue.toStringAsFixed(0)}', 'Revenue'),
                   ],
@@ -394,7 +412,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text('Dashboard overview'),
+              child: const Text('Dashboard Overview'),
             ),
           ),
 
@@ -427,8 +445,8 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                 onTap: () => setState(() => _currentBottomNavIndex = 2),
               ),
               _buildActionGridItem(
-                label: 'Recent Bills',
-                icon: Icons.history_rounded,
+                label: 'Available Bills',
+                icon: Icons.receipt_long_rounded,
                 bgColor: const Color(0xFFFEF9C3),
                 iconColor: const Color(0xFFA16207),
                 onTap: () => setState(() => _currentBottomNavIndex = 1),
@@ -450,7 +468,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Recent Invoices',
+                'Recent Transactions',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -475,34 +493,35 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: AppTheme.cardBorderColor, width: 1),
                   ),
                   child: Column(
                     children: [
-                      Icon(Icons.receipt_long_outlined, size: 40, color: Colors.grey.shade400),
-                      const SizedBox(height: 10),
+                      Icon(Icons.receipt_long_outlined, size: 44, color: Colors.grey.shade400),
+                      const SizedBox(height: 12),
                       const Text(
-                        'No invoices created yet',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textDark),
+                        'No invoices generated yet',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textDark),
                       ),
                       const SizedBox(height: 4),
                       const Text(
                         'Tap "Create Invoice" to generate your first bill',
-                        style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                        style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                         ),
                         onPressed: () {
                           setState(() => _currentBottomNavIndex = 1);
                           _invoicesTabKey.currentState?.openCreateForm();
                         },
                         icon: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
-                        label: const Text('Create Invoice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        label: const Text('Create First Invoice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -596,7 +615,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '₹ ${invoice.totalAmount.toStringAsFixed(2)}',
+                  '₹${invoice.totalAmount.toStringAsFixed(2)}',
                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textDark),
                 ),
               ],
@@ -1012,7 +1031,7 @@ class _InvoicesTabState extends ConsumerState<_InvoicesTab> {
   }
 }
 
-// TAB 2: PARTIES TAB
+// TAB 2: CLEAN & ELEGANT PARTIES TAB
 class _PartiesTab extends ConsumerStatefulWidget {
   final ValueChanged<Customer> onSelectPartyForInvoice;
 
@@ -1063,7 +1082,7 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Add New Party', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('Add New Party', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
                     IconButton(
                       icon: const Icon(Icons.close_rounded),
                       onPressed: () => Navigator.pop(ctx),
@@ -1132,6 +1151,35 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
     );
   }
 
+  Future<void> _confirmDeleteParty(Customer party) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Party?'),
+        content: Text('Are you sure you want to remove ${party.name} from your party list?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await ref.read(customerListProvider.notifier).removeCustomer(party.phone);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Removed ${party.name}')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final parties = ref.watch(customerListProvider);
@@ -1148,7 +1196,13 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Parties & Customers', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Parties & Customers', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textDark)),
+                  Text('${filteredParties.length} saved contacts', style: const TextStyle(fontSize: 12, color: AppTheme.textMuted)),
+                ],
+              ),
               ElevatedButton.icon(
                 onPressed: _showAddPartyDialog,
                 style: ElevatedButton.styleFrom(
@@ -1186,13 +1240,25 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.people_outline_rounded, size: 48, color: Colors.grey.shade400),
+                        Icon(Icons.people_outline_rounded, size: 60, color: Colors.grey.shade400),
                         const SizedBox(height: 12),
                         Text(
-                          _searchQuery.isEmpty ? 'No parties found. Click "+ Add Party" to create one.' : 'No party matching "$_searchQuery"',
-                          style: const TextStyle(color: AppTheme.textMuted),
+                          _searchQuery.isEmpty ? 'No parties added yet.' : 'No party matching "$_searchQuery"',
+                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 15),
                           textAlign: TextAlign.center,
                         ),
+                        if (_searchQuery.isEmpty) ...[
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            onPressed: _showAddPartyDialog,
+                            icon: const Icon(Icons.add_rounded, color: Colors.white),
+                            label: const Text('Add First Party', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          ),
+                        ]
                       ],
                     ),
                   )
@@ -1207,50 +1273,99 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
                           side: const BorderSide(color: AppTheme.cardBorderColor, width: 1),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(14.0),
-                          child: Row(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
                             children: [
-                              CircleAvatar(
-                                radius: 24,
-                                backgroundColor: AppTheme.mintBackground,
-                                child: Text(
-                                  party.name.isNotEmpty ? party.name[0].toUpperCase() : 'P',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryColor),
-                                ),
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 24,
+                                    backgroundColor: AppTheme.mintBackground,
+                                    child: Text(
+                                      party.name.isNotEmpty ? party.name[0].toUpperCase() : 'P',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primaryColor),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          party.name,
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textDark),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Row(
+                                          children: [
+                                            const Icon(Icons.phone_outlined, size: 14, color: AppTheme.textMuted),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              party.phone,
+                                              style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                                            ),
+                                          ],
+                                        ),
+                                        if (party.email.isNotEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 2),
+                                            child: Row(
+                                              children: [
+                                                const Icon(Icons.email_outlined, size: 14, color: AppTheme.textMuted),
+                                                const SizedBox(width: 4),
+                                                Expanded(
+                                                  child: Text(
+                                                    party.email,
+                                                    style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 22),
+                                    onPressed: () => _confirmDeleteParty(party),
+                                    tooltip: 'Delete party',
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              if (party.address.isNotEmpty) ...[
+                                const Divider(height: 20),
+                                Row(
                                   children: [
-                                    Text(
-                                      party.name,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppTheme.textDark),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      party.phone,
-                                      style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
-                                    ),
-                                    if (party.email.isNotEmpty)
-                                      Text(
-                                        party.email,
+                                    const Icon(Icons.location_on_outlined, size: 14, color: AppTheme.textMuted),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        party.address,
                                         style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
+                                    ),
                                   ],
                                 ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed: () => widget.onSelectPartyForInvoice(party),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppTheme.mintBackground,
-                                  foregroundColor: AppTheme.primaryColor,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ],
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => widget.onSelectPartyForInvoice(party),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppTheme.mintBackground,
+                                    foregroundColor: AppTheme.primaryColor,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  icon: const Icon(Icons.note_add_rounded, size: 18),
+                                  label: const Text('Create Bill For Party', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                                 ),
-                                icon: const Icon(Icons.add_rounded, size: 16),
-                                label: const Text('Invoice', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                               ),
                             ],
                           ),
@@ -1338,6 +1453,14 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     try {
       final user = ref.read(authRepositoryProvider).currentUser;
       final userId = user?.uid ?? 'guest_user_${DateTime.now().day}';
+
+      // 1. Pull latest cloud data from Firestore into local storage
+      await ref.read(firestoreSyncServiceProvider).pullDataFromCloud(
+            userId: userId,
+            ref: ref,
+          );
+
+      // 2. Push current local company info, parties, and invoices to Firestore
       final companyInfo = ref.read(companyInfoStateProvider);
       final parties = ref.read(customerListProvider);
       final invoices = await ref.read(invoiceRepositoryProvider).getInvoices();
