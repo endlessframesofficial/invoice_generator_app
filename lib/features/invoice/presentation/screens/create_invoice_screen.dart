@@ -213,7 +213,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     );
   }
 
-  // Drawer
+  // Navigation Drawer
   Widget _buildDrawer(BuildContext context, dynamic companyInfo) {
     final prefs = ref.watch(sharedPreferencesProvider);
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
@@ -224,86 +224,167 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
       backgroundColor: Colors.white,
       child: Column(
         children: [
-          UserAccountsDrawerHeader(
+          // Header Section
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 20,
+              bottom: 20,
+              left: 20,
+              right: 20,
+            ),
             decoration: const BoxDecoration(
-              color: AppTheme.primaryColor,
+              gradient: LinearGradient(
+                colors: [AppTheme.primaryColor, Color(0xFF059669)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              backgroundImage: (photoUrl != null && photoUrl.trim().isNotEmpty)
-                  ? NetworkImage(photoUrl)
-                  : null,
-              child: (photoUrl == null || photoUrl.trim().isEmpty)
-                  ? const Icon(Icons.person_rounded, color: AppTheme.primaryColor, size: 32)
-                  : null,
-            ),
-            accountName: Text(
-              companyInfo.name.isNotEmpty ? companyInfo.name : (authUser?.displayName ?? 'User'),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
-            ),
-            accountEmail: Text(
-              isLoggedIn ? (companyInfo.email.isNotEmpty ? companyInfo.email : (authUser?.email ?? 'Signed In User')) : 'Guest Account',
-              style: const TextStyle(color: Colors.white70),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.white,
+                      backgroundImage: (photoUrl != null && photoUrl.trim().isNotEmpty)
+                          ? NetworkImage(photoUrl)
+                          : null,
+                      child: (photoUrl == null || photoUrl.trim().isEmpty)
+                          ? const Icon(Icons.person_rounded, color: AppTheme.primaryColor, size: 32)
+                          : null,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isLoggedIn ? 'Signed In' : 'Guest Mode',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  isLoggedIn
+                      ? (companyInfo.name.isNotEmpty ? companyInfo.name : (authUser?.displayName ?? 'BillingBook Business'))
+                      : 'BillingBook Guest',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isLoggedIn
+                      ? (companyInfo.email.isNotEmpty ? companyInfo.email : (authUser?.email ?? ''))
+                      : 'Sign in to sync your data',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.home_rounded, color: AppTheme.primaryColor),
-            title: const Text('Home', style: TextStyle(fontWeight: FontWeight.w600)),
+
+          const SizedBox(height: 12),
+
+          // Menu Items with Active Highlight
+          _buildDrawerItem(
+            icon: Icons.home_rounded,
+            title: 'Home',
+            index: 0,
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentBottomNavIndex = 0);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.receipt_long_rounded),
-            title: const Text('Invoices'),
+          _buildDrawerItem(
+            icon: Icons.receipt_long_rounded,
+            title: 'Invoices',
+            index: 1,
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentBottomNavIndex = 1);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.people_rounded),
-            title: const Text('Parties & Customers'),
+          _buildDrawerItem(
+            icon: Icons.people_rounded,
+            title: 'Parties & Customers',
+            index: 2,
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentBottomNavIndex = 2);
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.settings_rounded),
-            title: const Text('Settings & Company Profile'),
+          _buildDrawerItem(
+            icon: Icons.settings_rounded,
+            title: 'Settings & Profile',
+            index: 3,
             onTap: () {
               Navigator.pop(context);
               setState(() => _currentBottomNavIndex = 3);
             },
           ),
-          const Divider(),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Divider(height: 1),
+          ),
+
+          // Logically Correct Auth Action (ONLY Sign In for Guest, ONLY Sign Out for Signed In)
           if (!isLoggedIn)
             ListTile(
-              leading: const Icon(Icons.account_circle_outlined, color: AppTheme.primaryColor),
-              title: const Text('Sign In'),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+              leading: const Icon(Icons.login_rounded, color: AppTheme.primaryColor),
+              title: const Text(
+                'Sign In / Register',
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+              ),
+              subtitle: const Text('Sync invoices & parties to cloud', style: TextStyle(fontSize: 11)),
               onTap: () {
                 Navigator.pop(context);
                 context.push('/login');
               },
             ),
-          ListTile(
-            leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
-            title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-            onTap: () async {
-              Navigator.pop(context);
-              await ref.read(authRepositoryProvider).signOut();
-              ref.invalidate(companyInfoStateProvider);
-              ref.invalidate(customerListProvider);
-              ref.invalidate(savedInvoicesListProvider);
-              ref.read(invoiceNotifierProvider.notifier).resetForm();
-              if (mounted) {
-                context.go('/login');
-              }
-            },
-          ),
+
+          if (isLoggedIn)
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+              leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              title: const Text(
+                'Sign Out',
+                style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+              ),
+              subtitle: const Text('Clear session & return to guest', style: TextStyle(fontSize: 11)),
+              onTap: () async {
+                Navigator.pop(context);
+                await ref.read(authRepositoryProvider).signOut();
+                ref.invalidate(companyInfoStateProvider);
+                ref.invalidate(customerListProvider);
+                ref.invalidate(savedInvoicesListProvider);
+                ref.read(invoiceNotifierProvider.notifier).resetForm();
+                if (mounted) {
+                  context.go('/login');
+                }
+              },
+            ),
+
           const Spacer(),
+
+          // Footer
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Column(
@@ -312,20 +393,52 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   'BILLINGBOOK',
                   style: TextStyle(
                     color: AppTheme.textDark,
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.8,
                   ),
                 ),
                 SizedBox(height: 4),
                 Text(
                   '🇮🇳 Made with ❤️ in India',
-                  style: TextStyle(color: AppTheme.textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: AppTheme.textMuted, fontSize: 11, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required int index,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = _currentBottomNavIndex == index;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      decoration: BoxDecoration(
+        color: isSelected ? AppTheme.mintBackground : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isSelected ? AppTheme.primaryColor : const Color(0xFF64748B),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? AppTheme.primaryColor : AppTheme.textDark,
+            fontSize: 14,
+          ),
+        ),
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
