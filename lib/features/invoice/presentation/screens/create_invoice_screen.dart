@@ -1115,10 +1115,12 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
       }
     } catch (e) {
       if (mounted) {
+        final errorText = e.toString().replaceAll('Exception: ', '').trim();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cloud sync notice: ${e.toString().split(']').last.trim()}'),
+            content: Text(errorText),
             backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 6),
           ),
         );
       }
