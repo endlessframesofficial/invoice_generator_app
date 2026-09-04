@@ -396,28 +396,6 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                     ],
                   ),
                 ),
-                IconButton(
-                  onPressed: () async {
-                    final user = ref.read(authRepositoryProvider).currentUser;
-                    if (user != null) {
-                      await ref.read(firestoreSyncServiceProvider).pullDataFromCloud(
-                            userId: user.uid,
-                            ref: ref,
-                          );
-                    } else {
-                      ref.invalidate(savedInvoicesListProvider);
-                    }
-                  },
-                  icon: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.refresh_rounded, color: AppTheme.primaryColor, size: 20),
-                  ),
-                  tooltip: 'Refresh & Sync Dashboard',
-                ),
               ],
             ),
           ),
@@ -467,52 +445,145 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // Clean Core Quick Actions (4 Cards)
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 14,
-            crossAxisSpacing: 14,
-            childAspectRatio: 1.8,
+          // Neat Dashboard Quick Actions (Create Invoice & Add Party)
+          Row(
             children: [
-              _buildActionGridItem(
-                label: 'Create Invoice',
-                icon: Icons.note_add_rounded,
-                bgColor: const Color(0xFFDCFCE7),
-                iconColor: const Color(0xFF15803D),
-                onTap: () {
-                  setState(() => _currentBottomNavIndex = 1);
-                  _invoicesTabKey.currentState?.openCreateForm();
-                },
+              // Create Invoice Action Card
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _currentBottomNavIndex = 1);
+                    _invoicesTabKey.currentState?.openCreateForm();
+                  },
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppTheme.primaryColor, Color(0xFF059669)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.note_add_rounded, color: Colors.white, size: 22),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Create Invoice',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                '+ New Bill',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              _buildActionGridItem(
-                label: 'Parties & Customers',
-                icon: Icons.people_rounded,
-                bgColor: const Color(0xFFDBEAFE),
-                iconColor: const Color(0xFF1D4ED8),
-                onTap: () => setState(() => _currentBottomNavIndex = 2),
-              ),
-              _buildActionGridItem(
-                label: 'Available Bills',
-                icon: Icons.receipt_long_rounded,
-                bgColor: const Color(0xFFFEF9C3),
-                iconColor: const Color(0xFFA16207),
-                onTap: () => setState(() => _currentBottomNavIndex = 1),
-              ),
-              _buildActionGridItem(
-                label: 'Settings & Profile',
-                icon: Icons.settings_rounded,
-                bgColor: const Color(0xFFFFEDD5),
-                iconColor: const Color(0xFFC2410C),
-                onTap: () => setState(() => _currentBottomNavIndex = 3),
+              const SizedBox(width: 12),
+              // Add Party Action Card
+              Expanded(
+                child: InkWell(
+                  onTap: () {
+                    setState(() => _currentBottomNavIndex = 2);
+                    _partiesTabKey.currentState?.showAddPartyDialog();
+                  },
+                  borderRadius: BorderRadius.circular(18),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppTheme.cardBorderColor, width: 1),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDBEAFE),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.person_add_rounded, color: Color(0xFF1D4ED8), size: 22),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Add Party',
+                                style: TextStyle(
+                                  color: AppTheme.textDark,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                '+ New Contact',
+                                style: TextStyle(
+                                  color: AppTheme.textMuted,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 24),
 
           // Real Recent Invoices Section Header
           Row(
@@ -700,49 +771,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     );
   }
 
-  Widget _buildActionGridItem({
-    required String label,
-    required IconData icon,
-    required Color bgColor,
-    required Color iconColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppTheme.cardBorderColor, width: 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: iconColor, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textDark,
-                  height: 1.2,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }
 
 // TAB 1: INVOICES TAB (List of Available Invoices + Form toggle)
