@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../customer/domain/customer.dart';
 import '../../../customer/presentation/providers/customer_provider.dart';
+import '../providers/invoice_form_state.dart';
 import '../providers/invoice_notifier.dart';
 
 class CustomerSection extends ConsumerStatefulWidget {
@@ -56,19 +57,21 @@ class _CustomerSectionState extends ConsumerState<CustomerSection> {
     final formState = ref.watch(invoiceNotifierProvider);
     final savedParties = ref.watch(customerListProvider);
 
-    // Sync controllers if provider state updated externally
-    if (formState.customerName != _nameController.text && !FocusScope.of(context).hasFocus) {
-      _nameController.text = formState.customerName;
-    }
-    if (formState.customerPhone != _phoneController.text && !FocusScope.of(context).hasFocus) {
-      _phoneController.text = formState.customerPhone;
-    }
-    if (formState.customerEmail != _emailController.text && !FocusScope.of(context).hasFocus) {
-      _emailController.text = formState.customerEmail;
-    }
-    if (formState.customerAddress != _addressController.text && !FocusScope.of(context).hasFocus) {
-      _addressController.text = formState.customerAddress;
-    }
+    // Listen to form state updates and sync text fields dynamically
+    ref.listen<InvoiceFormState>(invoiceNotifierProvider, (previous, next) {
+      if (_nameController.text != next.customerName) {
+        _nameController.text = next.customerName;
+      }
+      if (_phoneController.text != next.customerPhone) {
+        _phoneController.text = next.customerPhone;
+      }
+      if (_emailController.text != next.customerEmail) {
+        _emailController.text = next.customerEmail;
+      }
+      if (_addressController.text != next.customerAddress) {
+        _addressController.text = next.customerAddress;
+      }
+    });
 
     final notifier = ref.read(invoiceNotifierProvider.notifier);
 
