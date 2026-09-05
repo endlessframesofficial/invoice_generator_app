@@ -276,15 +276,6 @@ class DocumentCustomizationSection extends ConsumerWidget {
                           icon: const Icon(Icons.edit_rounded, size: 14),
                           label: const Text('Change Logo', style: TextStyle(fontSize: 12)),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                          tooltip: 'Remove Logo',
-                          onPressed: () async {
-                            final updated = companyInfo.copyWith(logoUrl: null);
-                            await ref.read(companyInfoStateProvider.notifier).updateCompanyInfo(updated);
-                          },
-                        ),
                       ],
                     ),
                   ] else ...[
@@ -392,18 +383,6 @@ class DocumentCustomizationSection extends ConsumerWidget {
                           ),
                           icon: const Icon(Icons.upload_file_rounded, size: 14),
                           label: const Text('Upload', style: TextStyle(fontSize: 11)),
-                        ),
-                        const SizedBox(width: 4),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
-                          tooltip: 'Remove Signature',
-                          onPressed: () async {
-                            final updated = companyInfo.copyWith(
-                              signatureUrl: null,
-                              signatureType: null,
-                            );
-                            await ref.read(companyInfoStateProvider.notifier).updateCompanyInfo(updated);
-                          },
                         ),
                       ],
                     ),
