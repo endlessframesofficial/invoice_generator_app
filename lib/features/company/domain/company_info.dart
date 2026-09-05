@@ -31,9 +31,9 @@ class CompanyInfo {
       address: address ?? this.address,
       phone: phone ?? this.phone,
       email: email ?? this.email,
-      logoUrl: logoUrl ?? this.logoUrl,
-      signatureUrl: signatureUrl ?? this.signatureUrl,
-      signatureType: signatureType ?? this.signatureType,
+      logoUrl: logoUrl,
+      signatureUrl: signatureUrl,
+      signatureType: signatureType,
     );
   }
 
@@ -43,21 +43,25 @@ class CompanyInfo {
       'address': address,
       'phone': phone,
       'email': email,
-      if (logoUrl != null) 'logoUrl': logoUrl,
-      if (signatureUrl != null) 'signatureUrl': signatureUrl,
-      if (signatureType != null) 'signatureType': signatureType,
+      'logoUrl': logoUrl ?? '',
+      'signatureUrl': signatureUrl ?? '',
+      'signatureType': signatureType ?? '',
     };
   }
 
   factory CompanyInfo.fromJson(Map<String, dynamic> json) {
+    final logo = json['logoUrl'] as String?;
+    final sig = json['signatureUrl'] as String?;
+    final sigType = json['signatureType'] as String?;
+
     return CompanyInfo(
       name: json['name'] as String? ?? '',
       address: json['address'] as String? ?? '',
       phone: json['phone'] as String? ?? '',
       email: json['email'] as String? ?? '',
-      logoUrl: json['logoUrl'] as String?,
-      signatureUrl: json['signatureUrl'] as String?,
-      signatureType: json['signatureType'] as String?,
+      logoUrl: (logo != null && logo.trim().isNotEmpty) ? logo : null,
+      signatureUrl: (sig != null && sig.trim().isNotEmpty) ? sig : null,
+      signatureType: (sigType != null && sigType.trim().isNotEmpty) ? sigType : null,
     );
   }
 }

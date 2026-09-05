@@ -33,6 +33,64 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   final _invoicesTabKey = GlobalKey<_InvoicesTabState>();
   final _partiesTabKey = GlobalKey<_PartiesTabState>();
   int _currentBottomNavIndex = 0;
+  bool _isSigningIn = false;
+
+  Future<void> _handleGoogleSignInDirect() async {
+    setState(() => _isSigningIn = true);
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      final userCred = await authRepo.signInWithGoogle();
+
+      if (userCred != null) {
+        final user = authRepo.currentUser;
+        if (user != null) {
+          final companyInfo = ref.read(companyInfoStateProvider);
+          final parties = ref.read(customerListProvider);
+          final localInvoices = await ref.read(invoiceRepositoryProvider).getInvoices();
+
+          try {
+            await ref.read(firestoreSyncServiceProvider).handleGuestToLoginMigration(
+                  user: user,
+                  companyInfo: companyInfo,
+                  parties: parties,
+                  localInvoices: localInvoices,
+                  ref: ref,
+                );
+          } catch (_) {}
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('Signed in successfully! Your data is now synced to Cloud Firestore.')),
+                ],
+              ),
+              backgroundColor: AppTheme.primaryColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sign in notice: ${e.toString().split(']').last.trim()}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningIn = false);
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -155,7 +213,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
             ),
 
             // Tab 3: Settings & Company Details Update
-            const _SettingsTab(),
+            _SettingsTab(onGoogleSignIn: _handleGoogleSignInDirect),
           ],
         ),
       ),
@@ -359,7 +417,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
               subtitle: const Text('Sync invoices & parties to cloud', style: TextStyle(fontSize: 11)),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/login');
+                _handleGoogleSignInDirect();
               },
             ),
 
@@ -1571,7 +1629,9 @@ class _PartiesTabState extends ConsumerState<_PartiesTab> {
 
 // TAB 3: SETTINGS TAB WITH UPDATE DETAILS OF COMPANY
 class _SettingsTab extends ConsumerStatefulWidget {
-  const _SettingsTab();
+  final VoidCallback? onGoogleSignIn;
+
+  const _SettingsTab({this.onGoogleSignIn});
 
   @override
   ConsumerState<_SettingsTab> createState() => _SettingsTabState();
@@ -1580,6 +1640,7 @@ class _SettingsTab extends ConsumerStatefulWidget {
 class _SettingsTabState extends ConsumerState<_SettingsTab> {
   final _formKey = GlobalKey<FormState>();
   bool _isSyncing = false;
+  bool _isSigningIn = false;
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
@@ -1798,6 +1859,63 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     } finally {
       if (mounted) {
         setState(() => _isSyncing = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignInDirect() async {
+    setState(() => _isSigningIn = true);
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      final userCred = await authRepo.signInWithGoogle();
+
+      if (userCred != null) {
+        final user = authRepo.currentUser;
+        if (user != null) {
+          final companyInfo = ref.read(companyInfoStateProvider);
+          final parties = ref.read(customerListProvider);
+          final localInvoices = await ref.read(invoiceRepositoryProvider).getInvoices();
+
+          try {
+            await ref.read(firestoreSyncServiceProvider).handleGuestToLoginMigration(
+                  user: user,
+                  companyInfo: companyInfo,
+                  parties: parties,
+                  localInvoices: localInvoices,
+                  ref: ref,
+                );
+          } catch (_) {}
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('Signed in successfully! Your data is now synced to Cloud Firestore.')),
+                ],
+              ),
+              backgroundColor: AppTheme.primaryColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sign in notice: ${e.toString().split(']').last.trim()}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSigningIn = false);
       }
     }
   }
@@ -2194,11 +2312,16 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
               children: [
                 if (!isLoggedIn)
                   ListTile(
-                    leading: const Icon(Icons.account_circle_outlined, color: AppTheme.primaryColor),
-                    title: const Text('Sign in with Google', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark)),
-                    subtitle: const Text('Sign in to enable Cloud Backup & Sync'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => context.push('/login'),
+                    leading: _isSigningIn
+                        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.account_circle_outlined, color: AppTheme.primaryColor),
+                    title: Text(
+                      _isSigningIn ? 'Signing in with Google...' : 'Sign in with Google',
+                      style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textDark),
+                    ),
+                    subtitle: const Text('Instant in-place sign in & cloud backup'),
+                    trailing: _isSigningIn ? null : const Icon(Icons.chevron_right_rounded),
+                    onTap: _isSigningIn ? null : (widget.onGoogleSignIn ?? _handleGoogleSignInDirect),
                   ),
                 if (isLoggedIn)
                   ListTile(

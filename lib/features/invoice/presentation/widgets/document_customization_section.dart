@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../company/presentation/providers/company_provider.dart';
 import '../providers/invoice_notifier.dart';
 
 class DocumentCustomizationSection extends ConsumerWidget {
@@ -10,6 +12,10 @@ class DocumentCustomizationSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final formState = ref.watch(invoiceNotifierProvider);
     final notifier = ref.read(invoiceNotifierProvider.notifier);
+    final companyInfo = ref.watch(companyInfoStateProvider);
+
+    final hasLogo = companyInfo.logoUrl != null && companyInfo.logoUrl!.trim().isNotEmpty;
+    final hasSignature = companyInfo.signatureUrl != null && companyInfo.signatureUrl!.trim().isNotEmpty;
 
     return Card(
       child: Padding(
@@ -86,45 +92,133 @@ class DocumentCustomizationSection extends ConsumerWidget {
             ),
 
             const SizedBox(height: 16),
-            
-            // Show Logo Switch
-            SwitchListTile.adaptive(
-              title: const Text(
-                'Include Company Logo',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: Color(0xFF0F172A),
-                ),
+
+            // Company Logo Availability Status & Switch
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.cardBorderColor, width: 1),
               ),
-              subtitle: const Text(
-                'Show technician logo and cartoon drawing in the header',
-                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            hasLogo ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+                            size: 18,
+                            color: hasLogo ? const Color(0xFF2E7D32) : Colors.orange.shade800,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            hasLogo ? 'Company Logo Available' : 'No Logo Set in Settings',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: hasLogo ? const Color(0xFF2E7D32) : Colors.orange.shade800,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Switch.adaptive(
+                        value: formState.showLogo,
+                        onChanged: (val) {
+                          if (!hasLogo && val) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Notice: No custom logo uploaded yet. You can upload a logo under Settings.'),
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                          notifier.updateShowLogo(val);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    hasLogo
+                        ? 'Include your custom uploaded company logo on the invoice header.'
+                        : 'No custom logo set. Go to Settings > Update Company Details to upload your logo.',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                ],
               ),
-              value: formState.showLogo,
-              onChanged: notifier.updateShowLogo,
-              contentPadding: EdgeInsets.zero,
             ),
-            
-            const Divider(height: 16, color: Color(0xFFE2E8F0)),
-            
-            // Show Signature Switch
-            SwitchListTile.adaptive(
-              title: const Text(
-                'Include Authorized Signature',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: Color(0xFF0F172A),
-                ),
+
+            const SizedBox(height: 12),
+
+            // Digital Signature Availability Status & Switch
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.cardBorderColor, width: 1),
               ),
-              subtitle: const Text(
-                'Show authorized signature graphic at the footer (disable for physical signing)',
-                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              hasSignature ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+                              size: 18,
+                              color: hasSignature ? const Color(0xFF2E7D32) : Colors.orange.shade800,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                hasSignature
+                                    ? 'Digital Signature Available (${companyInfo.signatureType == 'drawn' ? 'Drawn' : 'Image'})'
+                                    : 'No Signature Set in Settings',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: hasSignature ? const Color(0xFF2E7D32) : Colors.orange.shade800,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: formState.showSignature,
+                        onChanged: (val) {
+                          if (!hasSignature && val) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Notice: No digital signature set yet. Go to Settings to draw or upload your signature.'),
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                          notifier.updateShowSignature(val);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    hasSignature
+                        ? 'Include your saved digital signature on the invoice footer.'
+                        : 'No digital signature set. Go to Settings > Update Company Details to draw or upload your signature.',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                ],
               ),
-              value: formState.showSignature,
-              onChanged: notifier.updateShowSignature,
-              contentPadding: EdgeInsets.zero,
             ),
           ],
         ),
