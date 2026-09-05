@@ -1941,6 +1941,13 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     if (company.address != _addressController.text && !FocusScope.of(context).hasFocus) {
       _addressController.text = company.address;
     }
+    if (company.logoUrl != _logoUrl && !FocusScope.of(context).hasFocus) {
+      _logoUrl = company.logoUrl;
+    }
+    if (company.signatureUrl != _signatureUrl && !FocusScope.of(context).hasFocus) {
+      _signatureUrl = company.signatureUrl;
+      _signatureType = company.signatureType;
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),

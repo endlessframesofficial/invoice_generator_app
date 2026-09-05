@@ -53,17 +53,11 @@ class PdfServiceImpl implements PdfService {
   Future<Uint8List> generateInvoicePdf(Invoice invoice, CompanyInfo companyInfo) async {
     final pdf = pw.Document();
 
-    // Load custom base64 or fallback assets
-    final customLogo = _parseImage(companyInfo.logoUrl);
-    final customSignature = _parseImage(companyInfo.signatureUrl);
+    // Load custom base64 logo & signature if provided by user
+    final activeLogo = _parseImage(companyInfo.logoUrl);
+    final activeSignature = _parseImage(companyInfo.signatureUrl);
 
-    final signatureAsset = await _safeLoadImage('assets/images/signature.jpg');
-    final logoAsset = await _safeLoadImage('assets/images/ccs_logo.png');
-    final upiLogosImage = await _safeLoadImage('assets/images/upi_logos.jpg');
     final paidSealImage = await _safeLoadImage('assets/images/paid_seal.png');
-
-    final activeLogo = customLogo ?? logoAsset;
-    final activeSignature = customSignature ?? signatureAsset;
 
     final dateFormat = DateFormat('dd-MM-yyyy');
     final rupeeFormat = NumberFormat.currency(locale: 'en_IN', symbol: 'Rs. ', decimalDigits: 2);
