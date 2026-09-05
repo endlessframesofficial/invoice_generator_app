@@ -166,16 +166,21 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   }
 
   void _selectPartyForInvoice(Customer customer) {
-    ref.read(invoiceNotifierProvider.notifier).updateCustomerInfo(
-          name: customer.name,
-          phone: customer.phone,
-          email: customer.email,
-          address: customer.address,
-        );
+    FocusScope.of(context).unfocus();
+    final notifier = ref.read(invoiceNotifierProvider.notifier);
+    notifier.resetForm();
+    notifier.updateCustomerInfo(
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email,
+      address: customer.address,
+    );
     setState(() {
       _currentBottomNavIndex = 1; // Switch to Invoices tab
     });
-    _invoicesTabKey.currentState?.openCreateForm();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _invoicesTabKey.currentState?.openCreateForm();
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Selected ${customer.name} for new invoice'),

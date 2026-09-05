@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../customer/domain/customer.dart';
-import '../../../customer/presentation/providers/customer_provider.dart';
+import '../providers/invoice_form_state.dart';
 import '../providers/invoice_notifier.dart';
+import 'select_party_bottom_sheet.dart';
 
 class CustomerSection extends ConsumerStatefulWidget {
   const CustomerSection({super.key});
@@ -53,22 +54,21 @@ class _CustomerSectionState extends ConsumerState<CustomerSection> {
 
   @override
   Widget build(BuildContext context) {
-    final formState = ref.watch(invoiceNotifierProvider);
-    final savedParties = ref.watch(customerListProvider);
-
-    // Sync controllers if provider state updated externally
-    if (formState.customerName != _nameController.text && !FocusScope.of(context).hasFocus) {
-      _nameController.text = formState.customerName;
-    }
-    if (formState.customerPhone != _phoneController.text && !FocusScope.of(context).hasFocus) {
-      _phoneController.text = formState.customerPhone;
-    }
-    if (formState.customerEmail != _emailController.text && !FocusScope.of(context).hasFocus) {
-      _emailController.text = formState.customerEmail;
-    }
-    if (formState.customerAddress != _addressController.text && !FocusScope.of(context).hasFocus) {
-      _addressController.text = formState.customerAddress;
-    }
+    // Listen to form state updates and sync text fields dynamically
+    ref.listen<InvoiceFormState>(invoiceNotifierProvider, (previous, next) {
+      if (_nameController.text != next.customerName) {
+        _nameController.text = next.customerName;
+      }
+      if (_phoneController.text != next.customerPhone) {
+        _phoneController.text = next.customerPhone;
+      }
+      if (_emailController.text != next.customerEmail) {
+        _emailController.text = next.customerEmail;
+      }
+      if (_addressController.text != next.customerAddress) {
+        _addressController.text = next.customerAddress;
+      }
+    });
 
     final notifier = ref.read(invoiceNotifierProvider.notifier);
 
@@ -103,70 +103,69 @@ class _CustomerSectionState extends ConsumerState<CustomerSection> {
 
             const SizedBox(height: 12),
 
-            // SEARCH & SELECT EXISTING PARTY
-            if (savedParties.isNotEmpty) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            // SELECT PARTY / CONTACT BOTTOM SHEET BUTTON
+            InkWell(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => SelectPartyBottomSheet(
+                    onSelectCustomer: (customer) {
+                      _fillCustomerDetails(customer);
+                    },
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
                   color: AppTheme.mintBackground,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.search_rounded, size: 16, color: AppTheme.primaryColor),
-                        SizedBox(width: 6),
-                        Text(
-                          'Search & Autofill Existing Party',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person_search_rounded, color: AppTheme.primaryColor, size: 20),
                     ),
-                    const SizedBox(height: 8),
-                    Autocomplete<Customer>(
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        if (textEditingValue.text.isEmpty) {
-                          return savedParties;
-                        }
-                        return savedParties.where((Customer party) {
-                          return party.name.toLowerCase().contains(textEditingValue.text.toLowerCase()) ||
-                              party.phone.contains(textEditingValue.text);
-                        });
-                      },
-                      displayStringForOption: (Customer party) => '${party.name} (${party.phone})',
-                      onSelected: (Customer selectedParty) {
-                        _fillCustomerDetails(selectedParty);
-                      },
-                      fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-                        return TextFormField(
-                          controller: textEditingController,
-                          focusNode: focusNode,
-                          decoration: InputDecoration(
-                            hintText: 'Type party name or phone number...',
-                            isDense: true,
-                            fillColor: Colors.white,
-                            filled: true,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide.none,
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Select Party or Contact',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
                             ),
                           ),
-                        );
-                      },
+                          SizedBox(height: 2),
+                          Text(
+                            'Pick from saved parties or phone contacts',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: AppTheme.primaryColor, size: 16),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
+
+            const SizedBox(height: 16),
 
             TextFormField(
               controller: _nameController,
