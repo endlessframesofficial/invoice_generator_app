@@ -122,6 +122,84 @@ class _SelectPartyBottomSheetState extends ConsumerState<SelectPartyBottomSheet>
     );
   }
 
+  void _showAddPartyDialog(BuildContext context) {
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final addressCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add New Party', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Party / Customer Name *'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Phone Number *'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Phone is required' : null,
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email Address (Optional)'),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: addressCtrl,
+                  maxLines: 2,
+                  decoration: const InputDecoration(labelText: 'Billing Address (Optional)'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              final newParty = Customer(
+                name: nameCtrl.text.trim(),
+                phone: phoneCtrl.text.trim(),
+                email: emailCtrl.text.trim(),
+                address: addressCtrl.text.trim(),
+              );
+              await ref.read(customerListProvider.notifier).addCustomer(newParty);
+              if (mounted) {
+                Navigator.pop(ctx);
+                widget.onSelectCustomer(newParty);
+                Navigator.pop(context);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Save & Select', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final savedParties = ref.watch(customerListProvider);
@@ -277,101 +355,124 @@ class _SelectPartyBottomSheetState extends ConsumerState<SelectPartyBottomSheet>
       return party.name.toLowerCase().contains(_searchQuery) || party.phone.contains(_searchQuery);
     }).toList();
 
-    if (savedParties.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.people_outline_rounded, size: 60, color: Colors.grey.shade400),
-              const SizedBox(height: 12),
-              const Text(
-                'No saved parties found',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+    return Column(
+      children: [
+        // Quick Add New Party Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showAddPartyDialog(context),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                side: const BorderSide(color: AppTheme.primaryColor),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              const SizedBox(height: 6),
-              const Text(
-                'You can select contacts from the Contacts tab to autofill details.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+              icon: const Icon(Icons.person_add_rounded, color: AppTheme.primaryColor, size: 18),
+              label: const Text(
+                '+ Add New Party Directly',
+                style: TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 13),
               ),
-            ],
+            ),
           ),
         ),
-      );
-    }
+        const SizedBox(height: 6),
+        Expanded(
+          child: savedParties.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.people_outline_rounded, size: 50, color: Colors.grey.shade400),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'No saved parties found',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Tap "+ Add New Party Directly" above or pick from Contacts.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : (filtered.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Text(
+                          'No saved party matches "$_searchQuery"',
+                          style: const TextStyle(fontSize: 14, color: AppTheme.textMuted),
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final party = filtered[index];
+                        final initial = party.name.isNotEmpty ? party.name[0].toUpperCase() : 'P';
 
-    if (filtered.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Text(
-            'No saved party matches "$_searchQuery"',
-            style: const TextStyle(fontSize: 14, color: AppTheme.textMuted),
-          ),
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          leading: CircleAvatar(
+                            backgroundColor: AppTheme.mintBackground,
+                            child: Text(
+                              initial,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                            ),
+                          ),
+                          title: Text(
+                            party.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textDark),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                party.phone,
+                                style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                              ),
+                              if (party.address.isNotEmpty)
+                                Text(
+                                  party.address,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                                ),
+                            ],
+                          ),
+                          trailing: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppTheme.mintBackground,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Select',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                              ),
+                            ),
+                          ),
+                          onTap: () {
+                            widget.onSelectCustomer(party);
+                            Navigator.pop(context);
+                          },
+                        );
+                      },
+                    )),
         ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: filtered.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final party = filtered[index];
-        final initial = party.name.isNotEmpty ? party.name[0].toUpperCase() : 'P';
-
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          leading: CircleAvatar(
-            backgroundColor: AppTheme.mintBackground,
-            child: Text(
-              initial,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
-            ),
-          ),
-          title: Text(
-            party.name,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppTheme.textDark),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                party.phone,
-                style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
-              ),
-              if (party.address.isNotEmpty)
-                Text(
-                  party.address,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
-                ),
-            ],
-          ),
-          trailing: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.mintBackground,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'Select',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-          ),
-          onTap: () {
-            widget.onSelectCustomer(party);
-            Navigator.pop(context);
-          },
-        );
-      },
+      ],
     );
   }
 

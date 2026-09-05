@@ -16,6 +16,7 @@ import '../../../customer/presentation/providers/customer_provider.dart';
 import '../../data/invoice_repository.dart';
 import '../../domain/invoice.dart';
 import '../providers/invoice_notifier.dart';
+import '../widgets/company_section.dart';
 import '../widgets/customer_section.dart';
 import '../widgets/document_customization_section.dart';
 import '../widgets/payment_section.dart';
@@ -1082,6 +1083,8 @@ class _InvoicesTabState extends ConsumerState<_InvoicesTab> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const FadeInSlide(child: CompanySection()),
                     const SizedBox(height: 16),
                     const FadeInSlide(child: CustomerSection()),
                     const SizedBox(height: 16),
