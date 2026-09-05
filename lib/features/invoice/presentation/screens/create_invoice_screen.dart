@@ -1,9 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/firestore_sync_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/fade_in_slide.dart';
+import '../../../../core/widgets/signature_pad_dialog.dart';
 import '../../../../main.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../company/domain/company_info.dart';
@@ -1583,6 +1586,10 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
   late TextEditingController _emailController;
   late TextEditingController _addressController;
 
+  String? _logoUrl;
+  String? _signatureUrl;
+  String? _signatureType;
+
   @override
   void initState() {
     super.initState();
@@ -1591,6 +1598,9 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     _phoneController = TextEditingController(text: company.phone);
     _emailController = TextEditingController(text: company.email);
     _addressController = TextEditingController(text: company.address);
+    _logoUrl = company.logoUrl;
+    _signatureUrl = company.signatureUrl;
+    _signatureType = company.signatureType;
   }
 
   @override
@@ -1602,6 +1612,86 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
     super.dispose();
   }
 
+  Future<void> _pickLogoImage() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 500,
+        maxHeight: 500,
+        imageQuality: 80,
+      );
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        final base64String = base64Encode(bytes);
+        setState(() {
+          _logoUrl = 'data:image/png;base64,$base64String';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error selecting logo image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickSignatureImage() async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 500,
+        maxHeight: 250,
+        imageQuality: 80,
+      );
+      if (pickedFile != null) {
+        final bytes = await pickedFile.readAsBytes();
+        final base64String = base64Encode(bytes);
+        setState(() {
+          _signatureUrl = 'data:image/png;base64,$base64String';
+          _signatureType = 'uploaded';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error selecting signature image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _drawSignatureOnScreen() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => const SignaturePadDialog(),
+    );
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _signatureUrl = result;
+        _signatureType = 'drawn';
+      });
+    }
+  }
+
+  Widget _buildImageFromBase64OrUrl(String? str, {double height = 60}) {
+    if (str == null || str.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+    try {
+      if (str.startsWith('data:image')) {
+        final base64Data = str.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return Image.memory(bytes, height: height, fit: BoxFit.contain);
+      } else if (str.startsWith('http')) {
+        return Image.network(str, height: height, fit: BoxFit.contain);
+      }
+    } catch (_) {}
+    return const SizedBox.shrink();
+  }
+
   Future<void> _handleSaveCompanyDetails() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -1610,6 +1700,9 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
       address: _addressController.text.trim(),
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim(),
+      logoUrl: _logoUrl,
+      signatureUrl: _signatureUrl,
+      signatureType: _signatureType,
     );
 
     await ref.read(companyInfoStateProvider.notifier).updateCompanyInfo(updatedCompany);
@@ -1877,6 +1970,137 @@ class _SettingsTabState extends ConsumerState<_SettingsTab> {
                       decoration: const InputDecoration(
                         labelText: 'Business Address',
                         prefixIcon: Icon(Icons.location_on_outlined, color: AppTheme.primaryColor, size: 20),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Company Branding & Digital Signature',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textDark),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Logo Upload Container
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.cardBorderColor, width: 1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Company Logo Image', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          const SizedBox(height: 8),
+                          if (_logoUrl != null && _logoUrl!.isNotEmpty) ...[
+                            Center(child: _buildImageFromBase64OrUrl(_logoUrl, height: 70)),
+                            const SizedBox(height: 8),
+                          ],
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _pickLogoImage,
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
+                                  label: Text(_logoUrl == null ? 'Upload Logo' : 'Change Logo'),
+                                ),
+                              ),
+                              if (_logoUrl != null && _logoUrl!.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                                  onPressed: () => setState(() => _logoUrl = null),
+                                  tooltip: 'Remove Logo',
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Digital Signature Container
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.cardBorderColor, width: 1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Digital Signature', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              if (_signatureType != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.mintBackground,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _signatureType == 'drawn' ? 'Drawn Signature' : 'Uploaded Image',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          if (_signatureUrl != null && _signatureUrl!.isNotEmpty) ...[
+                            Center(child: _buildImageFromBase64OrUrl(_signatureUrl, height: 60)),
+                            const SizedBox(height: 8),
+                          ],
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _drawSignatureOnScreen,
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  icon: const Icon(Icons.draw_rounded, size: 18),
+                                  label: const Text('Draw Signature'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _pickSignatureImage,
+                                  style: OutlinedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                  icon: const Icon(Icons.upload_file_rounded, size: 18),
+                                  label: const Text('Upload Image'),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_signatureUrl != null && _signatureUrl!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton.icon(
+                                onPressed: () => setState(() {
+                                  _signatureUrl = null;
+                                  _signatureType = null;
+                                }),
+                                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                                label: const Text('Remove Signature', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
 

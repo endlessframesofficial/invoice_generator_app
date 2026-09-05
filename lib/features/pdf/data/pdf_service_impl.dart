@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,18 @@ class PdfServiceImpl implements PdfService {
   static final _borderColor = PdfColor.fromHex('#E2E8F0');
   static final _bgLight = PdfColor.fromHex('#F8FAFC');
 
+  pw.MemoryImage? _parseImage(String? imageStr) {
+    if (imageStr == null || imageStr.trim().isEmpty) return null;
+    try {
+      if (imageStr.startsWith('data:image')) {
+        final base64Data = imageStr.split(',').last;
+        final bytes = base64Decode(base64Data);
+        return pw.MemoryImage(bytes);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<pw.MemoryImage?> _safeLoadImage(String path) async {
     try {
       final data = await rootBundle.load(path);
@@ -40,11 +53,17 @@ class PdfServiceImpl implements PdfService {
   Future<Uint8List> generateInvoicePdf(Invoice invoice, CompanyInfo companyInfo) async {
     final pdf = pw.Document();
 
-    // Load assets safely
-    final signatureImage = await _safeLoadImage('assets/images/signature.jpg');
-    final logoImage = await _safeLoadImage('assets/images/ccs_logo.png');
+    // Load custom base64 or fallback assets
+    final customLogo = _parseImage(companyInfo.logoUrl);
+    final customSignature = _parseImage(companyInfo.signatureUrl);
+
+    final signatureAsset = await _safeLoadImage('assets/images/signature.jpg');
+    final logoAsset = await _safeLoadImage('assets/images/ccs_logo.png');
     final upiLogosImage = await _safeLoadImage('assets/images/upi_logos.jpg');
     final paidSealImage = await _safeLoadImage('assets/images/paid_seal.png');
+
+    final activeLogo = customLogo ?? logoAsset;
+    final activeSignature = customSignature ?? signatureAsset;
 
     final dateFormat = DateFormat('dd-MM-yyyy');
     final rupeeFormat = NumberFormat.currency(locale: 'en_IN', symbol: 'Rs. ', decimalDigits: 2);
@@ -77,10 +96,10 @@ class PdfServiceImpl implements PdfService {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 // Logo on the left
-                if (invoice.showLogo && logoImage != null)
+                if (invoice.showLogo && activeLogo != null)
                   pw.Container(
                     margin: const pw.EdgeInsets.only(right: 16),
-                    child: pw.Image(logoImage, width: 70, height: 70, fit: pw.BoxFit.contain),
+                    child: pw.Image(activeLogo, width: 70, height: 70, fit: pw.BoxFit.contain),
                   ),
                 // Company details
                 pw.Expanded(
@@ -374,8 +393,8 @@ class PdfServiceImpl implements PdfService {
                     children: [
                       pw.Text('For: ${companyInfo.name}', style: pw.TextStyle(font: baseFont, fontSize: 8, color: _mutedText)),
                       pw.SizedBox(height: 6),
-                      if (invoice.showSignature && signatureImage != null) ...[
-                        pw.Image(signatureImage, width: 80, height: 40, fit: pw.BoxFit.contain),
+                      if (invoice.showSignature && activeSignature != null) ...[
+                        pw.Image(activeSignature, width: 80, height: 40, fit: pw.BoxFit.contain),
                         pw.SizedBox(height: 4),
                         pw.Container(
                           width: 120,
